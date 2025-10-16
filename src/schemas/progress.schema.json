@@ -1,0 +1,176 @@
+{
+  "$id": "https://pruebaenlineapowerbi.local/schemas/progress.schema.json",
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "CxC Progress Snapshot",
+  "type": "object",
+  "required": ["version", "user", "progress"],
+  "properties": {
+    "version": {
+      "type": "string",
+      "pattern": "^\\d+\\.\\d+\\.\\d+$"
+    },
+    "user": {
+      "type": "object",
+      "required": ["id"],
+      "properties": {
+        "id": { "type": "string", "minLength": 1 },
+        "name": { "type": "string" },
+        "role": { "type": "string" },
+        "preferences": {
+          "type": "object",
+          "properties": {
+            "language": { "type": "string" },
+            "darkMode": { "type": "boolean" },
+            "notifications": { "type": "boolean" }
+          },
+          "additionalProperties": true
+        }
+      },
+      "additionalProperties": false
+    },
+    "progress": {
+      "type": "object",
+      "required": [
+        "currentAct",
+        "missions",
+        "points",
+        "badges",
+        "achievements",
+        "updatedAt"
+      ],
+      "properties": {
+        "currentAct": {
+          "type": "integer",
+          "minimum": 0,
+          "maximum": 4
+        },
+        "missions": {
+          "type": "object",
+          "propertyNames": {
+            "type": "string",
+            "minLength": 1
+          },
+          "additionalProperties": {
+            "type": "object",
+            "required": ["status"],
+            "properties": {
+              "status": {
+                "type": "string",
+                "enum": [
+                  "locked",
+                  "available",
+                  "in_progress",
+                  "completed",
+                  "platinum"
+                ]
+              },
+              "score": {
+                "type": "number",
+                "minimum": 0,
+                "maximum": 100
+              },
+              "grade": {
+                "type": "string",
+                "enum": ["Bronce", "Plata", "Oro", "Platino"]
+              },
+              "timestamp": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "updatedAt": {
+                "type": "string",
+                "format": "date-time"
+              },
+              "helpUsed": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "required": ["type", "timestamp"],
+                  "properties": {
+                    "type": {
+                      "type": "string",
+                      "enum": ["hint", "guide", "resolution", "collaboration"]
+                    },
+                    "cost": {
+                      "type": "integer",
+                      "minimum": 0
+                    },
+                    "timestamp": {
+                      "type": "string",
+                      "format": "date-time"
+                    }
+                  },
+                  "additionalProperties": false
+                },
+                "uniqueItems": false
+              },
+              "autosave": {
+                "type": "object",
+                "properties": {
+                  "step": { "type": "string" },
+                  "snapshotId": { "type": "string" },
+                  "datasetVersion": { "type": "string" },
+                  "updatedAt": { "type": "string", "format": "date-time" }
+                },
+                "additionalProperties": true
+              },
+              "collab": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "properties": {
+                    "partner": { "type": "string" },
+                    "timestamp": { "type": "string", "format": "date-time" },
+                    "notes": { "type": "string" }
+                  },
+                  "additionalProperties": false
+                }
+              }
+            },
+            "additionalProperties": true
+          }
+        },
+        "points": {
+          "type": "object",
+          "required": ["total", "available", "currentRank"],
+          "properties": {
+            "total": { "type": "integer", "minimum": 0 },
+            "available": { "type": "integer", "minimum": 0 },
+            "spentOnHelps": { "type": "integer", "minimum": 0 },
+            "currentRank": {
+              "type": "string",
+              "enum": ["Bronce", "Plata", "Oro", "Platino"]
+            }
+          },
+          "additionalProperties": false
+        },
+        "badges": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "achievements": {
+          "type": "array",
+          "items": { "type": "string" },
+          "uniqueItems": true
+        },
+        "finalPath": {
+          "type": ["string", "null"],
+          "enum": ["Supervisor", "AnalistaSenior", null]
+        },
+        "userName": { "type": "string" },
+        "preferences": {
+          "type": "object",
+          "additionalProperties": true
+        },
+        "updatedAt": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "checksum": { "type": ["string", "null"] }
+      },
+      "additionalProperties": true
+    }
+  },
+  "additionalProperties": true
+}

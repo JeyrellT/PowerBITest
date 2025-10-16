@@ -1,0 +1,355 @@
+.instructions-screen {
+  min-height: 100vh;
+  padding: 2rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.instructions-container {
+  max-width: 900px;
+  margin: 0 auto;
+  background: white;
+  border-radius: 20px;
+  padding: 3rem;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+}
+
+.instructions-header {
+  text-align: center;
+  margin-bottom: 3rem;
+  color: #333;
+}
+
+.instructions-header h1 {
+  font-size: 2.5rem;
+  margin-bottom: 0.5rem;
+}
+
+.instructions-header .subtitle {
+  font-size: 1.1rem;
+  color: #666;
+}
+
+.config-summary {
+  margin-bottom: 3rem;
+}
+
+.config-summary h2 {
+  font-size: 1.5rem;
+  color: #333;
+  margin-bottom: 1.5rem;
+  text-align: center;
+}
+
+.summary-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+}
+
+.summary-card {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 1rem;
+  background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+  border-radius: 12px;
+  color: white;
+}
+
+.summary-icon {
+  font-size: 2rem;
+}
+
+.summary-content {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-label {
+  font-size: 0.85rem;
+  opacity: 0.9;
+}
+
+.summary-value {
+  font-size: 1.1rem;
+  font-weight: 700;
+}
+
+.exam-guide-callout {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1.5rem;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 2.5rem;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
+  color: white;
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.35);
+}
+
+.callout-icon {
+  font-size: 2rem;
+}
+
+.callout-copy h3 {
+  margin: 0 0 0.5rem 0;
+  font-size: 1.2rem;
+}
+
+.callout-copy p {
+  margin: 0;
+  line-height: 1.6;
+  opacity: 0.9;
+}
+
+.callout-button {
+  border: none;
+  border-radius: 999px;
+  padding: 0.85rem 1.8rem;
+  background: rgba(255, 255, 255, 0.9);
+  color: #0f172a;
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  white-space: nowrap;
+}
+
+.callout-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
+}
+
+.instructions-content {
+  margin-bottom: 2rem;
+}
+
+.instruction-section {
+  margin-bottom: 2rem;
+  padding: 1.5rem;
+  border-left: 4px solid #667eea;
+  background: #f8f9fa;
+  border-radius: 8px;
+}
+
+.instruction-section.highlight {
+  background: linear-gradient(135deg, #e0f7fa 0%, #e1f5fe 100%);
+  border-left-color: #00bcd4;
+}
+
+.instruction-section.warning {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+  border-left-color: #ff9800;
+}
+
+.section-icon {
+  font-size: 2rem;
+  margin-bottom: 1rem;
+}
+
+.instruction-section h3 {
+  font-size: 1.3rem;
+  color: #333;
+  margin-bottom: 1rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.instruction-section p {
+  color: #555;
+  line-height: 1.8;
+  margin-bottom: 1rem;
+}
+
+.instruction-section ul {
+  margin-left: 1.5rem;
+  color: #555;
+}
+
+.instruction-section li {
+  margin-bottom: 0.5rem;
+  line-height: 1.6;
+}
+
+.instructions-actions {
+  display: flex;
+  gap: 1rem;
+  justify-content: space-between;
+}
+
+.back-button,
+.start-quiz-button {
+  flex: 1;
+  padding: 1rem 2rem;
+  font-size: 1.1rem;
+  font-weight: 600;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+}
+
+.back-button {
+  background: #e0e0e0;
+  color: #333;
+}
+
+.back-button:hover {
+  background: #d0d0d0;
+  transform: translateY(-2px);
+}
+
+.start-quiz-button {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.start-quiz-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+/* ============================================
+   QUESTIONS AVAILABILITY SECTION
+   ============================================ */
+.questions-availability {
+  margin-top: 1.5rem;
+  padding: 1.5rem;
+  border-radius: 12px;
+  border: 2px solid;
+  background: rgba(255, 255, 255, 0.95);
+}
+
+.questions-availability.success {
+  border-color: #10b981;
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+}
+
+.questions-availability.info {
+  border-color: #3b82f6;
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+.questions-availability.warning {
+  border-color: #f59e0b;
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+}
+
+.availability-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.availability-icon {
+  font-size: 1.8rem;
+  flex-shrink: 0;
+}
+
+.availability-text {
+  flex: 1;
+}
+
+.availability-message {
+  margin: 0 0 0.5rem 0;
+  font-weight: 600;
+  font-size: 1rem;
+  color: #1f2937;
+}
+
+.availability-suggestion {
+  margin: 0;
+  font-size: 0.9rem;
+  color: #6b7280;
+}
+
+.availability-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1rem;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.stat-item {
+  text-align: center;
+}
+
+.stat-label {
+  display: block;
+  font-size: 0.85rem;
+  color: #6b7280;
+  margin-bottom: 0.25rem;
+}
+
+.stat-value {
+  display: block;
+  font-size: 1.5rem;
+  font-weight: 700;
+}
+
+.stat-value.available {
+  color: #10b981;
+}
+
+.stat-value.total {
+  color: #3b82f6;
+}
+
+.stat-value.percentage {
+  color: #8b5cf6;
+}
+
+.availability-warning {
+  margin-top: 1rem;
+  padding: 1rem;
+  background: rgba(245, 158, 11, 0.15);
+  border-radius: 8px;
+  border-left: 4px solid #f59e0b;
+  font-size: 0.9rem;
+  color: #92400e;
+}
+
+.availability-warning strong {
+  color: #78350f;
+}
+
+@media (max-width: 768px) {
+  .instructions-screen {
+    padding: 1rem;
+  }
+
+  .instructions-container {
+    padding: 1.5rem;
+  }
+
+  .instructions-header h1 {
+    font-size: 2rem;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .instructions-actions {
+    flex-direction: column;
+  }
+
+  .exam-guide-callout {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .callout-button {
+    width: 100%;
+    text-align: center;
+  }
+}

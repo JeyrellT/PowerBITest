@@ -1,0 +1,506 @@
+/**
+ * 📋 ESTILOS PARA RECOMENDACIONES PERSONALIZADAS
+ */
+
+.personalized-recommendations {
+  width: 100%;
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+/* ============================================================================
+   HEADER
+   ============================================================================ */
+
+.recommendations-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.recommendations-header h2 {
+  font-size: 2rem;
+  color: var(--text-primary, #2c3e50);
+  margin-bottom: 8px;
+}
+
+.recommendations-subtitle {
+  color: var(--text-secondary, #7f8c8d);
+  font-size: 0.95rem;
+}
+
+/* ============================================================================
+   EMPTY STATE
+   ============================================================================ */
+
+.recommendations-empty {
+  text-align: center;
+  padding: 60px 20px;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  border-radius: 16px;
+  color: white;
+}
+
+.empty-icon {
+  font-size: 4rem;
+  margin-bottom: 16px;
+  animation: pulse 2s ease-in-out infinite;
+}
+
+.recommendations-empty h3 {
+  font-size: 1.5rem;
+  margin-bottom: 8px;
+}
+
+.recommendations-empty p {
+  opacity: 0.9;
+  max-width: 400px;
+  margin: 0 auto;
+}
+
+/* ============================================================================
+   LISTA DE RECOMENDACIONES
+   ============================================================================ */
+
+.recommendations-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 30px;
+}
+
+/* ============================================================================
+   TARJETA DE RECOMENDACIÓN
+   ============================================================================ */
+
+.recommendation-card {
+  background: white;
+  border-radius: 12px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-left: 4px solid #3498db;
+  transition: all 0.3s ease;
+}
+
+.recommendation-card:hover {
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.12);
+  transform: translateY(-2px);
+}
+
+.recommendation-card.expanded {
+  border-left-width: 6px;
+}
+
+/* Tipos de recomendación */
+.rec-habit { border-left-color: #e74c3c; }
+.rec-weakness { border-left-color: #e67e22; }
+.rec-review { border-left-color: #f39c12; }
+.rec-challenge { border-left-color: #9b59b6; }
+.rec-maintenance { border-left-color: #1abc9c; }
+.rec-diagnostic { border-left-color: #3498db; }
+.rec-motivational { border-left-color: #2ecc71; }
+.rec-strategy { border-left-color: #34495e; }
+
+/* ============================================================================
+   HEADER DE TARJETA
+   ============================================================================ */
+
+.rec-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  cursor: pointer;
+  margin-bottom: 12px;
+}
+
+.rec-title-section {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.rec-icon {
+  font-size: 2rem;
+  flex-shrink: 0;
+}
+
+.rec-title-text {
+  flex: 1;
+}
+
+.rec-title-text h3 {
+  font-size: 1.2rem;
+  color: var(--text-primary, #2c3e50);
+  margin: 0 0 6px 0;
+}
+
+.priority-badge {
+  display: inline-block;
+  padding: 3px 10px;
+  border-radius: 12px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.priority-critical {
+  background: #e74c3c;
+  color: white;
+}
+
+.priority-high {
+  background: #e67e22;
+  color: white;
+}
+
+.priority-medium {
+  background: #f39c12;
+  color: white;
+}
+
+.priority-low {
+  background: #ecf0f1;
+  color: #7f8c8d;
+}
+
+.expand-btn {
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  color: var(--text-secondary, #7f8c8d);
+  cursor: pointer;
+  padding: 4px;
+  transition: transform 0.2s ease;
+}
+
+.recommendation-card.expanded .expand-btn {
+  transform: rotate(0deg);
+}
+
+/* ============================================================================
+   MENSAJE
+   ============================================================================ */
+
+.rec-message {
+  margin-bottom: 16px;
+}
+
+.rec-message p {
+  color: var(--text-secondary, #546e7a);
+  line-height: 1.6;
+  margin: 0;
+}
+
+/* ============================================================================
+   DETALLES EXPANDIDOS
+   ============================================================================ */
+
+.rec-details {
+  background: #f8f9fa;
+  border-radius: 8px;
+  padding: 16px;
+  margin: 16px 0;
+  animation: slideDown 0.3s ease;
+}
+
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    max-height: 0;
+    padding: 0 16px;
+  }
+  to {
+    opacity: 1;
+    max-height: 500px;
+    padding: 16px;
+  }
+}
+
+/* Insight */
+.rec-insight {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  padding: 12px;
+  background: white;
+  border-radius: 8px;
+  border-left: 3px solid #f39c12;
+}
+
+.insight-icon {
+  font-size: 1.5rem;
+  flex-shrink: 0;
+}
+
+.rec-insight p {
+  margin: 0;
+  color: var(--text-secondary, #546e7a);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  font-style: italic;
+}
+
+/* Métricas */
+.rec-metrics {
+  margin-bottom: 16px;
+}
+
+.metric-bar {
+  margin-bottom: 8px;
+}
+
+.metric-label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.85rem;
+  color: var(--text-secondary, #7f8c8d);
+  margin-bottom: 6px;
+}
+
+.metric-simple {
+  text-align: center;
+  font-size: 1.1rem;
+  color: var(--text-primary, #2c3e50);
+}
+
+.metric-simple strong {
+  font-size: 1.5rem;
+  color: #3498db;
+}
+
+/* Progress bar */
+.progress-bar {
+  width: 100%;
+  height: 8px;
+  background: #e0e0e0;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.progress-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+  border-radius: 4px;
+  transition: width 0.5s ease;
+}
+
+/* Goal */
+.rec-goal {
+  background: white;
+  padding: 12px;
+  border-radius: 8px;
+  margin-bottom: 8px;
+}
+
+.goal-progress {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.9rem;
+  color: var(--text-secondary, #7f8c8d);
+  margin-bottom: 8px;
+}
+
+.goal-progress span:last-child {
+  font-weight: 600;
+  color: var(--text-primary, #2c3e50);
+}
+
+/* ============================================================================
+   ACCIONES
+   ============================================================================ */
+
+.rec-actions {
+  display: flex;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.action-btn {
+  flex: 1;
+  padding: 12px 20px;
+  border: none;
+  border-radius: 8px;
+  font-size: 0.95rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.action-btn.primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.action-btn.primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.action-btn.secondary {
+  background: #ecf0f1;
+  color: var(--text-secondary, #7f8c8d);
+}
+
+.action-btn.secondary:hover {
+  background: #bdc3c7;
+}
+
+/* ============================================================================
+   RESUMEN
+   ============================================================================ */
+
+.recommendations-summary {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 16px;
+  padding: 20px;
+  background: linear-gradient(135deg, #667eea15 0%, #764ba215 100%);
+  border-radius: 12px;
+}
+
+.summary-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.summary-icon {
+  font-size: 2rem;
+}
+
+.summary-item div {
+  display: flex;
+  flex-direction: column;
+}
+
+.summary-item strong {
+  font-size: 1.5rem;
+  color: var(--text-primary, #2c3e50);
+}
+
+.summary-item span {
+  font-size: 0.85rem;
+  color: var(--text-secondary, #7f8c8d);
+}
+
+/* ============================================================================
+   ANIMACIONES
+   ============================================================================ */
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.1);
+  }
+}
+
+/* ============================================================================
+   MODO OSCURO
+   ============================================================================ */
+
+.dark-mode .recommendation-card {
+  background: #2c3e50;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.dark-mode .rec-title-text h3 {
+  color: #ecf0f1;
+}
+
+.dark-mode .rec-message p {
+  color: #bdc3c7;
+}
+
+.dark-mode .rec-details {
+  background: #34495e;
+}
+
+.dark-mode .rec-insight {
+  background: #2c3e50;
+}
+
+.dark-mode .rec-insight p {
+  color: #bdc3c7;
+}
+
+.dark-mode .rec-goal {
+  background: #2c3e50;
+}
+
+.dark-mode .metric-label,
+.dark-mode .goal-progress {
+  color: #95a5a6;
+}
+
+.dark-mode .goal-progress span:last-child {
+  color: #ecf0f1;
+}
+
+.dark-mode .action-btn.secondary {
+  background: #34495e;
+  color: #bdc3c7;
+}
+
+.dark-mode .action-btn.secondary:hover {
+  background: #4a5f7f;
+}
+
+.dark-mode .recommendations-summary {
+  background: rgba(52, 73, 94, 0.3);
+}
+
+.dark-mode .summary-item strong {
+  color: #ecf0f1;
+}
+
+.dark-mode .summary-item span {
+  color: #95a5a6;
+}
+
+/* ============================================================================
+   RESPONSIVE
+   ============================================================================ */
+
+@media (max-width: 768px) {
+  .personalized-recommendations {
+    padding: 12px;
+  }
+
+  .recommendations-header h2 {
+    font-size: 1.5rem;
+  }
+
+  .rec-title-text h3 {
+    font-size: 1rem;
+  }
+
+  .rec-icon {
+    font-size: 1.5rem;
+  }
+
+  .rec-actions {
+    flex-direction: column;
+  }
+
+  .recommendations-summary {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .summary-icon {
+    font-size: 1.5rem;
+  }
+
+  .summary-item strong {
+    font-size: 1.2rem;
+  }
+}
+
+@media (max-width: 480px) {
+  .recommendations-summary {
+    grid-template-columns: 1fr;
+  }
+}

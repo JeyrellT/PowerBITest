@@ -1,0 +1,475 @@
+/* ===== ACHIEVEMENT UNLOCKED POPUP ===== */
+
+/* Overlay con backdrop blur */
+.achievement-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(8px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.3s ease;
+}
+
+.achievement-overlay.visible {
+  opacity: 1;
+  pointer-events: all;
+}
+
+.achievement-overlay.exiting {
+  opacity: 0;
+}
+
+/* Confeti Animation */
+.confetti-container {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.confetti-piece {
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  top: -10px;
+  animation: confettiFall 3s ease-out forwards;
+  opacity: 0.8;
+}
+
+@keyframes confettiFall {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+/* Popup Principal */
+.achievement-popup {
+  position: relative;
+  background: white;
+  border-radius: 24px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  overflow: hidden;
+  animation: popupEnter 0.5s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+}
+
+.achievement-overlay.exiting .achievement-popup {
+  animation: popupExit 0.3s ease-in forwards;
+}
+
+@keyframes popupEnter {
+  0% {
+    transform: scale(0.3) translateY(-100px);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.05);
+  }
+  100% {
+    transform: scale(1) translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes popupExit {
+  0% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(0.8) translateY(50px);
+    opacity: 0;
+  }
+}
+
+/* Botón Cerrar */
+.achievement-close {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: rgba(0, 0, 0, 0.3);
+  color: white;
+  border-radius: 50%;
+  cursor: pointer;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+  z-index: 10;
+}
+
+.achievement-close:hover {
+  background: rgba(0, 0, 0, 0.5);
+  transform: rotate(90deg);
+}
+
+/* Header */
+.achievement-header {
+  padding: 2rem 2rem 1.5rem;
+  text-align: center;
+  color: white;
+  position: relative;
+  overflow: hidden;
+}
+
+.achievement-header::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: linear-gradient(
+    45deg,
+    transparent,
+    rgba(255, 255, 255, 0.2),
+    transparent
+  );
+  animation: shimmerHeader 2s infinite;
+}
+
+@keyframes shimmerHeader {
+  0% {
+    transform: translateX(-100%) translateY(-100%) rotate(45deg);
+  }
+  100% {
+    transform: translateX(100%) translateY(100%) rotate(45deg);
+  }
+}
+
+.achievement-stars {
+  display: inline-block;
+  font-size: 1.5rem;
+  animation: twinkle 1s infinite alternate;
+}
+
+@keyframes twinkle {
+  0% {
+    opacity: 0.5;
+    transform: scale(1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1.2);
+  }
+}
+
+.achievement-title-popup {
+  margin: 0.5rem 0 0;
+  font-size: 1.8rem;
+  font-weight: 800;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  letter-spacing: 0.5px;
+}
+
+/* Contenido */
+.achievement-content-popup {
+  padding: 2rem;
+  text-align: center;
+}
+
+/* Icono Mega con Pulse */
+.achievement-icon-mega {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.icon-pulse {
+  position: absolute;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 215, 0, 0.3) 0%,
+    rgba(255, 215, 0, 0) 70%
+  );
+  animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+  50% {
+    transform: scale(1.2);
+    opacity: 0.5;
+  }
+}
+
+.icon-emoji {
+  font-size: 6rem;
+  animation: iconBounce 0.8s ease-out;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.2));
+  position: relative;
+  z-index: 1;
+}
+
+@keyframes iconBounce {
+  0% {
+    transform: scale(0) rotate(-180deg);
+  }
+  50% {
+    transform: scale(1.2) rotate(10deg);
+  }
+  70% {
+    transform: scale(0.9) rotate(-5deg);
+  }
+  100% {
+    transform: scale(1) rotate(0deg);
+  }
+}
+
+/* Info del Logro */
+.achievement-info-popup {
+  animation: slideUp 0.6s ease-out 0.2s backwards;
+}
+
+@keyframes slideUp {
+  0% {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.achievement-tier-label {
+  display: inline-block;
+  padding: 0.4rem 1.2rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 1px;
+  color: white;
+  margin-bottom: 1rem;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.achievement-name-popup {
+  font-size: 2rem;
+  font-weight: 800;
+  color: #1f2937;
+  margin: 0 0 0.75rem;
+  line-height: 1.2;
+}
+
+.achievement-description-popup {
+  font-size: 1.1rem;
+  color: #6b7280;
+  margin: 0 0 1.5rem;
+  line-height: 1.5;
+}
+
+.achievement-category-label {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.05);
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  margin-bottom: 1.5rem;
+  font-size: 0.9rem;
+  font-weight: 600;
+  color: #374151;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.category-icon {
+  font-size: 1.2rem;
+}
+
+/* Puntos */
+.achievement-points-popup {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.25rem;
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  padding: 1rem 2rem;
+  border-radius: 16px;
+  border: 3px solid;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  animation: pointsPop 0.6s ease-out 0.4s backwards;
+}
+
+@keyframes pointsPop {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.15);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+.points-label {
+  font-size: 0.85rem;
+  color: #92400e;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.points-value {
+  font-size: 2.5rem;
+  font-weight: 900;
+  color: #f59e0b;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+/* Footer */
+.achievement-footer {
+  padding: 1.5rem 2rem;
+  background: #f9fafb;
+  border-top: 1px solid #e5e7eb;
+}
+
+.progress-bar-container {
+  width: 100%;
+  height: 4px;
+  background: #e5e7eb;
+  border-radius: 2px;
+  overflow: hidden;
+  margin-bottom: 0.75rem;
+}
+
+.progress-bar-fill {
+  height: 100%;
+  animation: progressFill 5s linear forwards;
+}
+
+@keyframes progressFill {
+  0% {
+    width: 100%;
+  }
+  100% {
+    width: 0%;
+  }
+}
+
+.achievement-hint {
+  margin: 0;
+  text-align: center;
+  font-size: 0.85rem;
+  color: #9ca3af;
+}
+
+/* Responsive */
+@media (max-width: 640px) {
+  .achievement-popup {
+    max-width: 95%;
+    border-radius: 20px;
+  }
+
+  .achievement-header {
+    padding: 1.5rem 1.5rem 1rem;
+  }
+
+  .achievement-title-popup {
+    font-size: 1.5rem;
+  }
+
+  .achievement-content-popup {
+    padding: 1.5rem;
+  }
+
+  .achievement-icon-mega {
+    width: 120px;
+    height: 120px;
+  }
+
+  .icon-emoji {
+    font-size: 4.5rem;
+  }
+
+  .achievement-name-popup {
+    font-size: 1.6rem;
+  }
+
+  .achievement-description-popup {
+    font-size: 1rem;
+  }
+
+  .points-value {
+    font-size: 2rem;
+  }
+}
+
+/* Efectos especiales por tier */
+.achievement-tier-label.tier-platinum,
+.achievement-points-popup.tier-platinum {
+  animation: platinumGlow 2s infinite alternate;
+}
+
+@keyframes platinumGlow {
+  0% {
+    box-shadow: 0 4px 12px rgba(16, 185, 129, 0.3);
+  }
+  100% {
+    box-shadow: 0 4px 24px rgba(16, 185, 129, 0.6);
+  }
+}
+
+.achievement-tier-label.tier-gold,
+.achievement-points-popup.tier-gold {
+  animation: goldGlow 2s infinite alternate;
+}
+
+@keyframes goldGlow {
+  0% {
+    box-shadow: 0 4px 12px rgba(255, 215, 0, 0.3);
+  }
+  100% {
+    box-shadow: 0 4px 24px rgba(255, 215, 0, 0.6);
+  }
+}
+
+/* Accesibilidad */
+@media (prefers-reduced-motion: reduce) {
+  .achievement-popup,
+  .confetti-piece,
+  .icon-emoji,
+  .achievement-info-popup,
+  .achievement-points-popup {
+    animation: none;
+  }
+
+  .achievement-overlay.visible {
+    transition: none;
+  }
+}
