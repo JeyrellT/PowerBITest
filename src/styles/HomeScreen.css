@@ -344,7 +344,7 @@
    HERO SECTION - PROFESIONAL Y AVANZADO
    ============================================ */
 .hero-compact {
-  margin: 5rem 0 4rem;
+  margin: 8rem 0 4rem; /* Aumentado de 5rem a 8rem para dar espacio al header fixed */
   padding: 0 2rem;
   position: relative;
   z-index: 1;
@@ -2682,7 +2682,7 @@
   
   /* HERO SECTION - RESPONSIVE */
   .hero-compact {
-    margin: 2rem 0;
+    margin: 5rem 0 2rem; /* Aumentado de 2rem a 5rem en top para dar espacio al header fixed */
     padding: 0 1rem;
   }
   
