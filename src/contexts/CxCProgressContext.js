@@ -477,6 +477,30 @@ const calculateLevel = (points) => {
   return { ...LEVEL_THRESHOLDS[0], progressToNext: 0, pointsToNext: LEVEL_THRESHOLDS[1].points };
 };
 
+const toFiniteNumber = (value, fallback = 0) => {
+  const numeric = Number(value);
+  return Number.isFinite(numeric) ? numeric : fallback;
+};
+
+const toInteger = (value, fallback = 0) => {
+  const numeric = toFiniteNumber(value, fallback);
+  return Math.round(numeric);
+};
+
+const toPositiveInteger = (value, fallback = 0) => {
+  return Math.max(0, toInteger(value, fallback));
+};
+
+const clampNumber = (value, min, max) => {
+  return Math.min(Math.max(value, min), max);
+};
+
+const roundNumber = (value, decimals = 0, fallback = 0) => {
+  const numeric = toFiniteNumber(value, fallback);
+  const factor = Math.pow(10, decimals);
+  return Math.round(numeric * factor) / factor;
+};
+
 /**
  * Calcula racha de días consecutivos
  */
@@ -542,7 +566,10 @@ const calculateGlobalAccuracy = (questionTracking) => {
   );
   const correct = calculateCorrectAnswers(questionTracking);
   
-  return total > 0 ? Math.round((correct / total) * 1000) / 10 : 0;
+  if (total === 0) return 0;
+
+  const accuracy = (correct / total) * 100;
+  return clampNumber(roundNumber(accuracy, 1), 0, 100);
 };
 
 /**
@@ -751,6 +778,7 @@ export const useCxCProgress = () => {
   return context;
 };
 
+// 🆕 Definir el ref al inicio del componente
 export const CxCProgressProvider = ({ children }) => {
   // Inicializar con estructura por defecto para evitar null durante la carga
   const [progress, setProgress] = useState({
@@ -775,6 +803,14 @@ export const CxCProgressProvider = ({ children }) => {
   const [dirty, setDirty] = useState(false);
   const retryTimerRef = useRef(null);
   const internalSaveRef = useRef(() => Promise.resolve(null));
+  const lastProcessedQuizzesRef = useRef(new Set());
+
+  // ✅ NUEVOS: Sistema de deduplicación y cola de actualizaciones
+  // Eliminar o comentar estas variables no utilizadas
+  // const pendingUpdates = useRef([]);
+  // const updateQueue = useRef([]);
+  // const isProcessingQueue = useRef(false);
+  // const processedQuizzes = useRef(new Set());
 
   const clearRetryTimer = useCallback(() => {
     if (retryTimerRef.current) {
@@ -1431,6 +1467,76 @@ export const CxCProgressProvider = ({ children }) => {
     return (progress?.answeredQuestions || []).includes(questionId);
   }, [progress]);
 
+  /**
+   * 🆕 Obtiene solo las preguntas que el usuario respondió incorrectamente
+   * y necesitan repaso (más intentos incorrectos que correctos)
+   */
+  const getIncorrectQuestions = useCallback(() => {
+    const questionTracking = progress?.questionTracking || {};
+    const incorrectQuestionIds = [];
+    
+    Object.entries(questionTracking).forEach(([questionId, tracking]) => {
+      // Incluir si: tiene intentos Y más incorrectas que correctas
+      const hasAttempts = tracking.totalAttempts > 0;
+      const moreIncorrectThanCorrect = tracking.incorrectAttempts > tracking.correctAttempts;
+      const notMastered = tracking.status !== 'mastered';
+      
+      if (hasAttempts && moreIncorrectThanCorrect && notMastered) {
+        incorrectQuestionIds.push(questionId);
+      }
+    });
+    
+    console.log(`📋 Preguntas incorrectas para repaso: ${incorrectQuestionIds.length}`, incorrectQuestionIds);
+    return incorrectQuestionIds;
+  }, [progress]);
+
+  /**
+   * 🆕 Obtiene estadísticas de preguntas incorrectas
+   */
+  const getIncorrectQuestionsStats = useCallback(() => {
+    const questionTracking = progress?.questionTracking || {};
+    const stats = {
+      total: 0,
+      byDomain: {},
+      byLevel: {},
+      needsReview: []
+    };
+    
+    Object.entries(questionTracking).forEach(([questionId, tracking]) => {
+      const moreIncorrectThanCorrect = tracking.incorrectAttempts > tracking.correctAttempts;
+      const notMastered = tracking.status !== 'mastered';
+      
+      if (moreIncorrectThanCorrect && notMastered) {
+        stats.total++;
+        
+        // Por dominio
+        if (tracking.domain) {
+          stats.byDomain[tracking.domain] = (stats.byDomain[tracking.domain] || 0) + 1;
+        }
+        
+        // Por nivel
+        if (tracking.level) {
+          stats.byLevel[tracking.level] = (stats.byLevel[tracking.level] || 0) + 1;
+        }
+        
+        // Información de la pregunta para review
+        stats.needsReview.push({
+          questionId,
+          domain: tracking.domain,
+          level: tracking.level,
+          incorrectAttempts: tracking.incorrectAttempts,
+          correctAttempts: tracking.correctAttempts,
+          lastAttemptDate: tracking.lastAttemptDate
+        });
+      }
+    });
+    
+    // Ordenar por más intentos incorrectos primero
+    stats.needsReview.sort((a, b) => b.incorrectAttempts - a.incorrectAttempts);
+    
+    return stats;
+  }, [progress]);
+
   // ============================================================================
   // FUNCIONES INTEGRADAS DE QUESTIONTRACKER
   // ============================================================================
@@ -1629,15 +1735,34 @@ export const CxCProgressProvider = ({ children }) => {
    * Actualiza progreso después de un quiz (compatibilidad con progressManager)
    */
   const updateProgressAfterQuiz = useCallback((quizResults) => {
-    // ✅ SOLUCIÓN #2: Log extensivo del inicio de actualización
     console.log('🎯 CxCProgressContext.updateProgressAfterQuiz llamado con:', quizResults);
-    console.log('📊 Estado previo:', {
-      'progress.totalPoints': progress?.totalPoints,
-      'progress.totalXP': progress?.totalXP,
-      'progress.answeredQuestions.length': progress?.answeredQuestions?.length || 0,
-      'progress.questionTracking.size': progress?.questionTracking ? Object.keys(progress.questionTracking).length : 0
+    
+    // 🆕 VALIDACIÓN: Prevenir actualización duplicada con el mismo quiz
+    const quizSignature = JSON.stringify({
+      questions: quizResults.questionDetails?.map(q => q.id).sort(),
+      correctAnswers: quizResults.correctAnswers,
+      totalTime: quizResults.totalTime
     });
-
+    
+    // Verificar si ya procesamos este quiz (usando el ref correctamente definido)
+    if (lastProcessedQuizzesRef.current.has(quizSignature)) {
+      console.log('⚠️ Quiz duplicado detectado en contexto, ignorando');
+      return {
+        newAchievements: [],
+        pointsEarned: 0,
+        xpEarned: 0,
+        levelUp: false,
+        duplicate: true
+      };
+    }
+    
+    lastProcessedQuizzesRef.current.add(quizSignature);
+    
+    // Limpiar signatures antiguas después de 5 segundos
+    setTimeout(() => {
+      lastProcessedQuizzesRef.current.delete(quizSignature);
+    }, 5000);
+    
     const newAchievements = [];
     const totalQuestions = Math.max(0, Number(quizResults?.totalQuestions) || 0);
     const correctAnswers = Math.max(0, Number(quizResults?.correctAnswers) || 0);
@@ -1684,6 +1809,20 @@ export const CxCProgressProvider = ({ children }) => {
     }
 
     applyProgressUpdate((prev) => {
+      // ✅ VERIFICACIÓN ADICIONAL: Detectar duplicados en historial reciente
+      const recentHistory = (prev.history || []).slice(0, 5);
+      const isDuplicate = recentHistory.some(h => 
+        h.type === 'quiz' && 
+        h.questions === totalQuestions &&
+        h.correctAnswers === correctAnswers &&
+        Math.abs(new Date(h.completedAt) - Date.now()) < 2000 // Menos de 2 segundos
+      );
+
+      if (isDuplicate) {
+        console.log('⚠️ Quiz duplicado detectado en historial, ignorando actualización');
+        return prev; // No hacer cambios si es duplicado
+      }
+      
       const updatedProgress = { ...prev };
       
       // ✅ FIX 1: Actualizar domainStats con campo `incorrect` calculado
@@ -1883,16 +2022,21 @@ export const CxCProgressProvider = ({ children }) => {
       'progress.totalXP (valor)': progress.totalXP
     });
     
-    // ✅ ESTADÍSTICAS BÁSICAS - Usar ?? para detectar undefined/null
-    const totalPoints = progress.totalPoints ?? 0;
-    const totalXP = progress.totalXP ?? 0;
-    const levelInfo = calculateLevel(totalPoints);
+    // ✅ ESTADÍSTICAS BÁSICAS - Normalizar valores numéricos
+    const totalPoints = toPositiveInteger(progress.totalPoints);
+    const totalXP = toPositiveInteger(progress.totalXP);
+    const levelInfoRaw = calculateLevel(totalPoints);
+    const levelInfo = {
+      ...levelInfoRaw,
+      progressToNext: clampNumber(roundNumber(levelInfoRaw.progressToNext ?? 0, 1), 0, 100),
+      pointsToNext: Math.max(0, toInteger(levelInfoRaw.pointsToNext ?? 0))
+    };
     
     // ✅ PREGUNTAS Y QUIZZES
     const answeredQuestions = progress.answeredQuestions || [];
     const questionsAnswered = answeredQuestions.length;
     const quizzesTaken = (progress.history || []).filter(h => h.type === 'quiz').length;
-    const correctAnswers = calculateCorrectAnswers(progress.questionTracking);
+    const correctAnswers = toPositiveInteger(calculateCorrectAnswers(progress.questionTracking));
     const globalAccuracy = calculateGlobalAccuracy(progress.questionTracking);
     
     // ⚠️ VALIDACIÓN: Si questionTracking está vacío pero answeredQuestions tiene datos
@@ -1906,43 +2050,88 @@ export const CxCProgressProvider = ({ children }) => {
     }
     
     // ✅ RACHA Y ACTIVIDAD
-    const streakDays = calculateStreakDays(progress.history, progress.lastActivity);
-    const maxStreak = progress.maxStreak || 0;
+    const streakDays = Math.max(0, toInteger(calculateStreakDays(progress.history, progress.lastActivity)));
+    const maxStreak = Math.max(0, toInteger(progress.maxStreak || 0));
     const lastActivity = progress.lastActivity || null;
     
     // ✅ TIEMPO Y VELOCIDAD
-    const totalTimeSpent = calculateTotalTime(progress.questionTracking);
+    const totalTimeSpent = Math.max(0, toInteger(calculateTotalTime(progress.questionTracking)));
     const avgTimePerQuestion = questionsAnswered > 0 
-      ? Math.round(totalTimeSpent / questionsAnswered) 
+      ? Math.max(0, toInteger(totalTimeSpent / questionsAnswered)) 
       : 0;
     
     const history = progress.history || [];
     const bestScore = history.length > 0
-      ? Math.max(...history.map(quiz => quiz.score || 0))
+      ? roundNumber(Math.max(...history.map(quiz => toFiniteNumber(quiz.score, 0))), 1)
       : 0;
-    const fastestQuiz = history.length > 0
-      ? Math.min(...history.map(quiz => quiz.timeSpent || Infinity).filter(t => t !== Infinity))
+    const fastestTimes = history.length > 0
+      ? history
+          .map(quiz => toFiniteNumber(quiz.timeSpent, Infinity))
+          .filter(time => Number.isFinite(time) && time >= 0)
+      : [];
+    const fastestQuizRaw = fastestTimes.length > 0
+      ? Math.min(...fastestTimes)
+      : null;
+    const fastestQuiz = Number.isFinite(fastestQuizRaw)
+      ? Math.max(0, toInteger(fastestQuizRaw))
       : null;
     
     // ✅ RETENCIÓN FSRS
-    const avgRetention = calculateAvgRetention(progress.questionTracking);
-    const avgStability = calculateAvgStability(progress.questionTracking);
-    const dueReviews = countDueReviews(progress.questionTracking);
-    const mastered = countMastered(progress.questionTracking);
+    const avgRetention = clampNumber(toPositiveInteger(calculateAvgRetention(progress.questionTracking)), 0, 100);
+    const avgStability = toPositiveInteger(calculateAvgStability(progress.questionTracking));
+    const dueReviews = toPositiveInteger(countDueReviews(progress.questionTracking));
+    const mastered = toPositiveInteger(countMastered(progress.questionTracking));
     
     // ✅ ZONA DE DESARROLLO PRÓXIMO (ZPD)
-    const comfortZone = calculateComfortZone(progress.questionTracking);
-    const zpd = calculateZPD(progress.questionTracking);
-    const challenging = calculateChallenging(progress.questionTracking);
+    const comfortZone = clampNumber(toPositiveInteger(calculateComfortZone(progress.questionTracking)), 0, 100);
+    const zpd = clampNumber(toPositiveInteger(calculateZPD(progress.questionTracking)), 0, 100);
+    const challenging = clampNumber(toPositiveInteger(calculateChallenging(progress.questionTracking)), 0, 100);
     
-    // ✅ ESTADÍSTICAS DE DOMINIO
+    // ✅ ESTADÍSTICAS DE DOMINIO - CON VALIDACIÓN ROBUSTA
     const domainStats = {};
     Object.entries(progress.domainStats || {}).forEach(([domain, stats]) => {
-      const domainAccuracy = stats.attempted > 0 
-        ? (stats.correct / stats.attempted) * 100 
+      // Validar que stats sea un objeto
+      if (!stats || typeof stats !== 'object') {
+        console.warn(`⚠️ domainStats[${domain}] no es un objeto válido:`, stats);
+        return;
+      }
+      
+      const attempted = toPositiveInteger(stats.attempted);
+      const correct = toPositiveInteger(stats.correct);
+      
+      // ✅ VALIDACIÓN: correct no puede ser mayor que attempted
+      const validCorrect = Math.min(correct, attempted);
+      
+      const baseIncorrect = stats.incorrect !== undefined
+        ? stats.incorrect
+        : attempted - validCorrect;
+      const incorrect = toPositiveInteger(baseIncorrect);
+      
+      // ✅ VALIDACIÓN: attempted + incorrect debe tener sentido
+      const validIncorrect = Math.min(incorrect, attempted);
+      
+      const total = toPositiveInteger(stats.total);
+      const timeSpent = Math.max(0, toInteger(stats.timeSpent || 0));
+      const avgTime = roundNumber(stats.avgTime || 0, 1);
+      
+      // ✅ PRECISIÓN: con validación anti-división por cero
+      const domainAccuracy = attempted > 0 
+        ? clampNumber(roundNumber((validCorrect / attempted) * 100, 1), 0, 100) 
         : 0;
+      
+      // ✅ VALIDACIÓN DE CONSISTENCIA
+      if (validCorrect + validIncorrect > attempted) {
+        console.warn(`⚠️ Inconsistencia en dominio ${domain}: correct(${validCorrect}) + incorrect(${validIncorrect}) > attempted(${attempted})`);
+      }
+      
       domainStats[domain] = {
         ...stats,
+        attempted,
+        correct: validCorrect,
+        incorrect: validIncorrect,
+        total,
+        timeSpent,
+        avgTime,
         accuracy: domainAccuracy
       };
     });
@@ -1961,18 +2150,26 @@ export const CxCProgressProvider = ({ children }) => {
     const badges = progress.badges || [];
     
     // ✅ PREPARACIÓN PARA EXAMEN
-    const examReadiness = calculateExamReadiness(progress);
-    const daysToReady = estimateDaysToReady(progress);
+    const examReadiness = clampNumber(calculateExamReadiness(progress), 0, 100);
+    const daysToReady = Math.max(0, toInteger(estimateDaysToReady(progress)));
     const confidence = determineConfidence(progress);
     
     // ✅ INSIGHTS Y TENDENCIAS
     const recentQuizzes = history.slice(-5);
     const recentAvgAccuracy = recentQuizzes.length > 0
-      ? recentQuizzes.reduce((sum, q) => sum + (q.accuracy || 0), 0) / recentQuizzes.length
+      ? clampNumber(roundNumber(
+          recentQuizzes.reduce((sum, q) => sum + toFiniteNumber(q.accuracy, 0), 0) / recentQuizzes.length,
+          1
+        ), 0, 100)
       : 0;
-    
-    const improving = recentQuizzes.length >= 2 && 
-      recentQuizzes[recentQuizzes.length - 1].accuracy > recentQuizzes[0].accuracy;
+
+    const lastQuizAccuracy = recentQuizzes.length > 0
+      ? toFiniteNumber(recentQuizzes[recentQuizzes.length - 1].accuracy, 0)
+      : 0;
+    const firstQuizAccuracy = recentQuizzes.length > 0
+      ? toFiniteNumber(recentQuizzes[0].accuracy, 0)
+      : 0;
+    const improving = recentQuizzes.length >= 2 && lastQuizAccuracy > firstQuizAccuracy;
 
     const result = {
       // ✅ Básicos
@@ -1980,59 +2177,59 @@ export const CxCProgressProvider = ({ children }) => {
       totalXP,
       levelInfo,
       currentLevel: levelInfo.level,
-      
+
       // ✅ Preguntas (USAR answeredQuestions.length como fuente)
-      questionsAnswered,  // ✅ Calculado desde answeredQuestions.length
+      questionsAnswered, // ✅ Calculado desde answeredQuestions.length
       answeredQuestions: questionsAnswered, // ✅ Alias para compatibilidad
       correctAnswers,
       accuracy: globalAccuracy, // ✅ Alias primario
       globalAccuracy, // ✅ Backward compatibility
-      
+
       // ✅ Quizzes
       quizzesTaken,
       bestScore,
       fastestQuiz,
-      
+
       // ✅ Tiempo
       totalTimeSpent,
       avgTimePerQuestion,
-      
+
       // ✅ Racha
       streakDays,
       maxStreak,
       lastActivity,
-      
+
       // ✅ Retención FSRS
       avgRetention,
       avgStability,
       dueReviews,
       mastered,
-      
+
       // ✅ ZPD
       comfortZone,
       zpd,
       challenging,
-      
+
       // ✅ Dominios
       domainStats,
       strongDomains,
       weakDomains,
-      
+
       // ✅ Logros
       achievements,
       achievementCount,
       badges,
-      
+
       // ✅ Examen
       examReadiness,
       daysToReady,
       confidence,
-      
+
       // ✅ Tendencias
       recentQuizzes,
       recentAvgAccuracy,
       improving,
-      
+
       // ✅ Historia completa
       history // ✅ Agregar history explícitamente
     };
@@ -2222,6 +2419,8 @@ export const CxCProgressProvider = ({ children }) => {
     saveAnsweredQuestion,
     getAnsweredQuestions,
     isQuestionAnswered,
+    getIncorrectQuestions, // 🆕 Obtener preguntas incorrectas
+    getIncorrectQuestionsStats, // 🆕 Estadísticas de preguntas incorrectas
     updateProgressAfterQuiz,
     getStats,
     resetProgress,

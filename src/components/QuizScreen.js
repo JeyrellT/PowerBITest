@@ -29,20 +29,41 @@ const QuizScreen = ({ onNavigate, quizConfig }) => {
     console.log('✅ Preguntas ya respondidas (CONTEXTO CENTRALIZADO):', answeredQuestionIds.length);
     console.log('📊 Questions con tracking:', Object.keys(questionTracking).length);
     
-    // ✅ NUEVO: Sistema inteligente de filtrado
-    // Por defecto, excluir SOLO las preguntas dominadas (no todas las respondidas)
-    // Esto permite repetir preguntas que aún necesitan práctica
-    const filteredQuestions = getFilteredQuestions(
-      quizConfig.domain,
-      quizConfig.level,
-      quizConfig.numberOfQuestions,
-      [], // No usar preguntasExcluidas legacy
-      {
-        questionTracking, // Pasar tracking para decisiones inteligentes
-        excludeMasteredOnly: true, // ✅ Solo excluir dominadas, no todas
-        prioritizeWeak: true // ✅ Priorizar preguntas débiles
-      }
-    );
+    let filteredQuestions;
+    
+    // 🆕 Modo especial: Quiz de solo preguntas incorrectas
+    if (quizConfig.incorrectOnly && quizConfig.incorrectQuestions) {
+      console.log('🔄 Modo REPASO: Cargando solo preguntas incorrectas', quizConfig.incorrectQuestions);
+      
+      // Filtrar el pool de preguntas para incluir SOLO las incorrectas
+      filteredQuestions = getFilteredQuestions(
+        quizConfig.domain,
+        quizConfig.level,
+        quizConfig.numberOfQuestions,
+        [], // No excluir ninguna
+        {
+          questionTracking,
+          includeSpecific: quizConfig.incorrectQuestions, // 🆕 Solo estas preguntas
+          excludeMasteredOnly: false,
+          prioritizeWeak: false
+        }
+      );
+    } else {
+      // ✅ Modo normal: Sistema inteligente de filtrado
+      // Por defecto, excluir SOLO las preguntas dominadas (no todas las respondidas)
+      // Esto permite repetir preguntas que aún necesitan práctica
+      filteredQuestions = getFilteredQuestions(
+        quizConfig.domain,
+        quizConfig.level,
+        quizConfig.numberOfQuestions,
+        [], // No usar preguntasExcluidas legacy
+        {
+          questionTracking, // Pasar tracking para decisiones inteligentes
+          excludeMasteredOnly: true, // ✅ Solo excluir dominadas, no todas
+          prioritizeWeak: true // ✅ Priorizar preguntas débiles
+        }
+      );
+    }
     
     console.log('🎯 Preguntas obtenidas:', filteredQuestions.length);
     
@@ -133,6 +154,21 @@ const QuizScreen = ({ onNavigate, quizConfig }) => {
       timestamp: new Date().toISOString()
     };
     onNavigate('results', { results });
+  };
+
+  // Corregir implementación de handleQuizComplete
+  const handleQuizComplete = () => {
+    const results = {
+      questions: questions, // Usar 'questions' en lugar de 'shuffledQuestions'
+      answers: answers, // Asumiendo que 'answers' debe ser 'userAnswers'
+      timeElapsed: timeElapsed, // Asumiendo que hay una variable 'elapsedTime' para el tiempo
+      config: quizConfig, // Usar 'quizConfig' en lugar de 'config'
+      timestamp: Date.now(),
+      sessionId: `quiz_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+    };
+    
+    console.log('📋 Quiz completado con ID único:', results.sessionId);
+    onNavigate('results', results);
   };
 
   // Mensaje de carga

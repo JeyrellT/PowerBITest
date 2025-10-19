@@ -27,10 +27,13 @@ function App() {
     setCurrentScreen('home');
   };
 
-  const navigateToScreen = (screen, data) => {
+  const navigateToScreen = (screen, data, updateType) => {
     if (data) {
       if (data.config) setQuizConfig(data.config);
       if (data.results) setQuizResults(data.results);
+    }
+    if (!data && updateType === 'quiz-complete') {
+      setQuizResults((prev) => (prev ? { ...prev } : prev));
     }
     setCurrentScreen(screen);
   };

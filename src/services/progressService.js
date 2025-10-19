@@ -38,6 +38,13 @@ class ProgressService {
     this.pendingSaveRequests = new Map();
     this.eventListeners = new Map();
 
+    // ✅ NUEVO: Sistema de cola y deduplicación
+    this.saveQueue = [];
+    this.isSaving = false;
+    this.lastSaveHash = null;
+    this.lastSaveTime = 0;
+    this.MIN_SAVE_INTERVAL = 500; // Mínimo 500ms entre guardados
+
     this.handleChannelMessage = this.handleChannelMessage.bind(this);
     this.handleStorageEvent = this.handleStorageEvent.bind(this);
     this.handleBeforeUnload = this.handleBeforeUnload.bind(this);
@@ -482,8 +489,63 @@ class ProgressService {
     return snapshot;
   }
 
+  // ✅ Generar hash de los datos para detectar duplicados
+  generateDataHash(data) {
+    const str = JSON.stringify({
+      totalPoints: data?.progress?.totalPoints,
+      quizzesTaken: data?.progress?.quizzesTaken,
+      answeredQuestions: data?.progress?.answeredQuestions?.length,
+      timestamp: Math.floor(Date.now() / 1000) // Precisión de segundos
+    });
+    
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+      const char = str.charCodeAt(i);
+      hash = ((hash << 5) - hash) + char;
+      hash = hash & hash;
+    }
+    return hash.toString(36);
+  }
+
   async saveProgress(progressData, options = {}) {
     const { source = 'autosave' } = options;
+
+    // ✅ Generar hash para detectar duplicados
+    const dataHash = this.generateDataHash(progressData);
+    
+    // ✅ Si es el mismo hash que el último guardado, ignorar
+    if (this.lastSaveHash === dataHash) {
+      console.log('⏭️ Datos idénticos al último guardado, ignorando');
+      return { 
+        success: true, 
+        skipped: true,
+        timestamp: new Date().toISOString() 
+      };
+    }
+
+    // ✅ Throttling: Evitar guardados muy frecuentes
+    const now = Date.now();
+    if (now - this.lastSaveTime < this.MIN_SAVE_INTERVAL) {
+      console.log('⏸️ Guardado muy reciente, agregando a cola');
+      return new Promise((resolve, reject) => {
+        this.saveQueue.push({ 
+          data: progressData, 
+          options, 
+          resolve, 
+          reject,
+          hash: dataHash,
+          timestamp: now
+        });
+        
+        if (!this.isSaving) {
+          setTimeout(() => this.processSaveQueue(), this.MIN_SAVE_INTERVAL);
+        }
+      });
+    }
+
+    // ✅ Guardar inmediatamente
+    this.lastSaveHash = dataHash;
+    this.lastSaveTime = now;
 
     if (!this.channel || this.isLeader) {
       return this.performSave(progressData, { broadcast: true, source });
@@ -494,6 +556,44 @@ class ProgressService {
     } catch (error) {
       console.warn('Fallo guardado remoto, intentando fallback local:', error.message);
       return this.performSave(progressData, { broadcast: false, source: 'fallback' });
+    }
+  }
+
+  // ✅ Procesar cola de guardados
+  async processSaveQueue() {
+    if (this.saveQueue.length === 0) {
+      this.isSaving = false;
+      return;
+    }
+
+    this.isSaving = true;
+    
+    // ✅ Tomar el último elemento (más reciente) y descartar los demás similares
+    const current = this.saveQueue.pop();
+    
+    // ✅ Eliminar elementos duplicados de la cola
+    this.saveQueue = this.saveQueue.filter(item => 
+      item.hash !== current.hash
+    );
+
+    try {
+      this.lastSaveHash = current.hash;
+      this.lastSaveTime = Date.now();
+      
+      const result = !this.channel || this.isLeader
+        ? await this.performSave(current.data, { broadcast: true, source: current.options.source })
+        : await this.sendSaveRequest(current.data, current.options.source);
+      
+      current.resolve(result);
+    } catch (error) {
+      current.reject(error);
+    }
+
+    // ✅ Procesar siguiente elemento después de un delay
+    if (this.saveQueue.length > 0) {
+      setTimeout(() => this.processSaveQueue(), this.MIN_SAVE_INTERVAL);
+    } else {
+      this.isSaving = false;
     }
   }
 

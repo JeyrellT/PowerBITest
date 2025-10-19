@@ -454,7 +454,7 @@ const ProfileScreenDuolingo = ({ onNavigate }) => {
             : 0;
 
       const totalQuestionsPool = DOMAIN_TOTAL_QUESTIONS[domainKey] || attempted;
-      const completion = totalQuestionsPool > 0 ? (attempted / totalQuestionsPool) * 100 : 0;
+      const completion = totalQuestionsPool > 0 ? (correct / totalQuestionsPool) * 100 : 0;
 
       const avgConfidence =
         computed.avgConfidenceCount > 0
@@ -1981,7 +1981,7 @@ const DomainsTabDuo = ({ stats, animateCharts }) => {
                 ></div>
               </div>
               <div className="domain-progress-label">
-                {attempted}/{totalQuestions || '∞'} preguntas exploradas
+                {correct}/{totalQuestions || '∞'} preguntas dominadas
               </div>
 
               <div className="domain-insights">

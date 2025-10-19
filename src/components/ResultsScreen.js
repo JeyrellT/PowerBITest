@@ -11,9 +11,12 @@ const ResultsScreen = ({ onNavigate, results }) => {
   const [achievementQueue, setAchievementQueue] = useState([]);
   const [currentAchievement, setCurrentAchievement] = useState(null);
   
-  // ✅ SOLUCIÓN CRÍTICA: Bandera para evitar procesamiento múltiple
-  const [hasProcessed, setHasProcessed] = useState(false);
+  // ✅ SOLUCIÓN CRÍTICA: Sistema robusto anti-duplicación
   const processedQuizId = useRef(null);
+  const isProcessing = useRef(false);
+  const resultsProcessed = useRef(new Set());
+  const processedTimestamp = useRef(null);
+  const hasProcessedResults = useRef(false); // 🆕 Flag definitivo
 
   // ✅ ÚNICA FUENTE DE VERDAD: useCxCProgress
   const {
@@ -23,7 +26,9 @@ const ResultsScreen = ({ onNavigate, results }) => {
     checkAchievements,
     getQuestionTrackingStats,
     getQuestionTracking,
-    getAllQuestionsTracking
+    getAllQuestionsTracking,
+    getIncorrectQuestions, // 🆕 Para obtener preguntas incorrectas
+    getIncorrectQuestionsStats // 🆕 Para estadísticas de incorrectas
   } = useCxCProgress();
 
   // ✅ Crear instancia de ProfileImpactCalculator con inyección de dependencias
@@ -35,118 +40,206 @@ const ResultsScreen = ({ onNavigate, results }) => {
     });
   }, [getQuestionTracking, getAllQuestionsTracking, getQuestionTrackingStats]);
 
-  useEffect(() => {
-    if (results && results.questions && results.answers) {
-      // ✅ SOLUCIÓN CRÍTICA #7: Generar ID único del quiz para evitar procesamiento múltiple
-      const quizId = `${results.questions[0]?.id}_${results.timeElapsed}_${results.questions.length}`;
-      
-      // ⚠️ SI YA PROCESAMOS ESTE QUIZ, NO HACER NADA
-      if (processedQuizId.current === quizId) {
-        console.log('⏭️ Quiz ya procesado, saltando:', quizId);
-        return;
+  // 🆕 Calcular estadísticas de preguntas incorrectas
+  const incorrectStats = useMemo(() => {
+    return getIncorrectQuestionsStats();
+  }, [getIncorrectQuestionsStats]);
+
+  // 🆕 Handler para comenzar quiz de repaso con solo preguntas incorrectas
+  const handleRetryIncorrect = () => {
+    const incorrectQuestions = getIncorrectQuestions();
+    
+    if (incorrectQuestions.length === 0) {
+      alert('¡Excelente! No tienes preguntas incorrectas que repasar.');
+      return;
+    }
+    
+    // Navegar al quiz con configuración especial para preguntas incorrectas
+    onNavigate('quiz', {
+      config: {
+        domain: 'all',
+        level: 'all',
+        numberOfQuestions: Math.min(incorrectQuestions.length, 10),
+        incorrectOnly: true, // 🆕 Flag especial para filtrar solo incorrectas
+        incorrectQuestions // 🆕 Lista explícita de preguntas a incluir
       }
-      
-      // Marcar como procesado INMEDIATAMENTE para evitar duplicados
-      processedQuizId.current = quizId;
-      setHasProcessed(true);
-      
-      // ✅ SOLUCIÓN #2: Agregar logs extensivos para rastrear guardado
-      console.log('📊 ResultsScreen - Procesando resultados del quiz (ÚNICO):', {
-        quizId,
-        totalQuestions: results.questions.length,
-        totalAnswers: Object.keys(results.answers).length,
-        timeElapsed: results.timeElapsed,
-        config: results.config
-      });
-      
-      // 🎯 INTEGRACIÓN SIMPLIFICADA - EVITAR DUPLICACIONES
-      
-      // 1. Procesar cada pregunta UNA SOLA VEZ con el tracking centralizado
-      results.questions.forEach((question, index) => {
-        const userAnswer = results.answers[index];
-        if (userAnswer !== undefined) {
-          const isCorrect = userAnswer === question.respuestaCorrecta;
-          const timeSpent = results.timeElapsed / results.questions.length; // Promedio
-          
-          console.log(`📝 Guardando pregunta ${question.id}:`, {
-            isCorrect,
-            timeSpent,
+    });
+  };
+
+  useEffect(() => {
+    // ✅ PREVENIR EJECUCIONES CONCURRENTES/DUPLICADAS
+    if (!results || !results.questions || !results.answers) {
+      return;
+    }
+
+    // 🆕 VERIFICACIÓN DEFINITIVA: Si ya procesamos CUALQUIER resultado, salir
+    if (hasProcessedResults.current) {
+      console.log('⛔ Resultado ya procesado definitivamente, ignorando');
+      return;
+    }
+
+    // ✅ GENERAR ID ÚNICO MÁS ROBUSTO (incluir timestamp de creación del resultado)
+    const resultTimestamp = results.timestamp || Date.now();
+    const quizSignature = JSON.stringify({
+      questionIds: results.questions.map(q => q.id).sort(),
+      answers: Object.entries(results.answers).sort(),
+      timeElapsed: results.timeElapsed,
+      domain: results.config?.domain || 'all'
+    });
+    const quizId = `${resultTimestamp}_${btoa(quizSignature).substring(0, 10)}`;
+    
+    const currentTime = Date.now();
+    
+    // ⚠️ VERIFICACIÓN GLOBAL CON SIGNATURE
+    if (resultsProcessed.current.has(quizId)) {
+      console.log('⏭️ Quiz con signature ya procesado:', quizId);
+      return;
+    }
+    
+    // ⚠️ VERIFICACIÓN TEMPORAL: < 500ms desde último procesamiento
+    if (processedTimestamp.current && (currentTime - processedTimestamp.current) < 500) {
+      console.log('⏸️ Procesamiento muy reciente (< 500ms), ignorando');
+      return;
+    }
+    
+    // ⚠️ LOCK CONCURRENTE
+    if (isProcessing.current) {
+      console.log('⚠️ Procesamiento en curso, abortando duplicado');
+      return;
+    }
+    
+    // 🔒 BLOQUEO INMEDIATO Y DEFINITIVO
+    isProcessing.current = true;
+    hasProcessedResults.current = true; // 🆕 Marcar como procesado PERMANENTEMENTE
+    processedQuizId.current = quizId;
+    resultsProcessed.current.add(quizId);
+    processedTimestamp.current = currentTime;
+    
+    console.log('✅ Quiz ÚNICO bloqueado para procesamiento:', {
+      quizId,
+      timestamp: resultTimestamp,
+      questions: results.questions.length
+    });
+    
+    // ✅ SOLUCIÓN #2: Agregar logs extensivos para rastrear guardado
+    console.log('📊 ResultsScreen - Procesando resultados del quiz (ÚNICO):', {
+      quizId,
+      totalQuestions: results.questions.length,
+      totalAnswers: Object.keys(results.answers).length,
+      timeElapsed: results.timeElapsed,
+      config: results.config
+    });
+    
+    // 🎯 INTEGRACIÓN SIMPLIFICADA - EVITAR DUPLICACIONES
+    
+    // 1. Procesar cada pregunta UNA SOLA VEZ con el tracking centralizado
+    results.questions.forEach((question, index) => {
+      const userAnswer = results.answers[index];
+      if (userAnswer !== undefined) {
+        const isCorrect = userAnswer === question.respuestaCorrecta;
+        const timeSpent = results.timeElapsed / results.questions.length; // Promedio
+        
+        console.log(`📝 Guardando pregunta ${question.id}:`, {
+          isCorrect,
+          timeSpent,
+          domain: question.dominio,
+          level: question.nivel
+        });
+        
+        // ✅ Registrar en el contexto centralizado con metadata completa
+        recordQuestionAttempt(
+          question.id,
+          isCorrect,
+          timeSpent,
+          {
             domain: question.dominio,
-            level: question.nivel
-          });
-          
-          // ✅ Registrar en el contexto centralizado con metadata completa
-          recordQuestionAttempt(
-            question.id,
-            isCorrect,
-            timeSpent,
-            {
-              domain: question.dominio,
-              level: question.nivel,
-              subdominio: question.subdominio || 'otros',
-              format: question.formato || 'opcion-multiple',
-              difficulty: question.trampaComun ? 'trick' : 'normal'
-            }
-          );
-          
-          // ✅ Guardar como pregunta respondida en el contexto
+            level: question.nivel,
+            subdominio: question.subdominio || 'otros',
+            format: question.formato || 'opcion-multiple',
+            difficulty: question.trampaComun ? 'trick' : 'normal'
+          }
+        );
+        
+        // ✅ Solo guardar como respondida si es correcta (las incorrectas vuelven al pool)
+        if (isCorrect) {
           saveAnsweredQuestion(question.id);
         }
-      });
-      
-      console.log('✅ Todas las preguntas procesadas');
+      }
+    });
+    
+    console.log('✅ Todas las preguntas procesadas');
 
-      // 2. Calcular detalles de preguntas para el progreso
-      const questionDetails = results.questions.map((question, index) => ({
-        id: question.id,
-        domain: question.dominio,
-        level: question.nivel, // ✅ Incluir nivel para cálculo de puntos
-        correct: results.answers[index] === question.respuestaCorrecta,
-        timeSpent: results.timeElapsed / results.questions.length
-      }));
+    // 2. Calcular detalles de preguntas para el progreso
+    const questionDetails = results.questions.map((question, index) => ({
+      id: question.id,
+      domain: question.dominio,
+      level: question.nivel, // ✅ Incluir nivel para cálculo de puntos
+      correct: results.answers[index] === question.respuestaCorrecta,
+      timeSpent: results.timeElapsed / results.questions.length
+    }));
 
-      // 3. Preparar datos para actualizar progreso
-      const quizResultsData = {
-        totalQuestions: results.questions.length,
-        correctAnswers: Object.keys(results.answers).filter((index) => 
-          results.answers[index] === results.questions[index].respuestaCorrecta
-        ).length,
-        totalTime: results.timeElapsed,
-        domain: results.config?.domain || 'all',
-        questionDetails
-      };
+    // 3. Preparar datos para actualizar progreso
+    const quizResultsData = {
+      totalQuestions: results.questions.length,
+      correctAnswers: Object.keys(results.answers).filter((index) => 
+        results.answers[index] === results.questions[index].respuestaCorrecta
+      ).length,
+      totalTime: results.timeElapsed,
+      domain: results.config?.domain || 'all',
+      questionDetails
+    };
 
-      // 4. ✅ ÚNICA ACTUALIZACIÓN - updateProgressAfterQuiz maneja TODO
-      // (puntos, XP, domainStats, levelStats, history, achievements, racha, etc.)
-      console.log('🎯 Llamando updateProgressAfterQuiz con:', quizResultsData);
-      const updateInfo = updateProgressAfterQuiz(quizResultsData);
-      console.log('✅ Resultado de updateProgressAfterQuiz:', updateInfo);
-      setProgressUpdate(updateInfo);
-      
-      // ✅ SOLUCIÓN #5: Forzar sincronización y notificar cambios
-      // Disparar evento personalizado para que otros componentes sepan que hay cambios
-      window.dispatchEvent(new CustomEvent('progressUpdated', {
-        detail: { updateInfo, questionsProcessed: results.questions.length }
-      }));
-      
-      // 5. ✅ Verificar y desbloquear logros
-      setTimeout(() => {
-        const unlockedAchievements = checkAchievements();
-        if (unlockedAchievements && unlockedAchievements.length > 0) {
-          setNewAchievements(unlockedAchievements);
-          setAchievementQueue(unlockedAchievements); // Inicializar queue para popups
-          console.log('🏆 Logros desbloqueados:', unlockedAchievements);
-        }
-      }, 500); // Delay para asegurar que el estado se actualizó
-      
-      console.log('✅ Progreso actualizado correctamente (CONTEXTO CENTRALIZADO):', {
-        questionsTracked: results.questions.length,
-        trackingStats: getQuestionTrackingStats(),
-        profileImpact: profileImpact.calculateGlobalCompetencyChange()
-      });
-    }
-  }, [results, recordQuestionAttempt, saveAnsweredQuestion,
-      updateProgressAfterQuiz, checkAchievements, getQuestionTrackingStats, profileImpact]);
+    // 4. ✅ ÚNICA ACTUALIZACIÓN - updateProgressAfterQuiz maneja TODO
+    // (puntos, XP, domainStats, levelStats, history, achievements, racha, etc.)
+    console.log('🎯 Llamando updateProgressAfterQuiz con:', quizResultsData);
+    const updateInfo = updateProgressAfterQuiz(quizResultsData);
+    console.log('✅ Resultado de updateProgressAfterQuiz:', updateInfo);
+    setProgressUpdate(updateInfo);
+    
+    // ✅ SOLUCIÓN #5: Forzar sincronización y notificar cambios
+    // Disparar evento personalizado para que otros componentes sepan que hay cambios
+    window.dispatchEvent(new CustomEvent('progressUpdated', {
+      detail: { updateInfo, questionsProcessed: results.questions.length }
+    }));
+    
+    // 5. ✅ Verificar y desbloquear logros
+    setTimeout(() => {
+      const unlockedAchievements = checkAchievements();
+      if (unlockedAchievements && unlockedAchievements.length > 0) {
+        setNewAchievements(unlockedAchievements);
+        setAchievementQueue(unlockedAchievements); // Inicializar queue para popups
+        console.log('🏆 Logros desbloqueados:', unlockedAchievements);
+      }
+    }, 500); // Delay para asegurar que el estado se actualizó
+    
+    console.log('✅ Progreso actualizado correctamente (CONTEXTO CENTRALIZADO):', {
+      questionsTracked: results.questions.length,
+      trackingStats: getQuestionTrackingStats(),
+      profileImpact: profileImpact.calculateGlobalCompetencyChange()
+    });
+    
+    // 🆕 Al finalizar, asegurar que el flag permanece
+    // NO resetear hasProcessedResults.current aquí
+    
+    // Solo liberar el lock de procesamiento concurrente
+    setTimeout(() => {
+      isProcessing.current = false;
+    }, 100);
+    
+    // ✅ Cleanup: NO resetear hasProcessedResults en cleanup
+    return () => {
+      isProcessing.current = false;
+      // NO resetear hasProcessedResults.current aquí
+    };
+  }, [
+    results, 
+    recordQuestionAttempt, 
+    saveAnsweredQuestion, 
+    updateProgressAfterQuiz, 
+    checkAchievements, 
+    getQuestionTrackingStats,
+    profileImpact
+  ]); // ✅ Añadidas todas las dependencias necesarias
 
   // 🎉 Efecto para manejar queue de popups de achievements
   useEffect(() => {
@@ -262,52 +355,33 @@ const ResultsScreen = ({ onNavigate, results }) => {
               </div>
             </div>
             
-            {progressUpdate.newAchievements && progressUpdate.newAchievements.length > 0 && (
+            {/* ✅ CONSOLIDADO: Solo mostrar si HAY logros */}
+            {newAchievements && newAchievements.length > 0 && (
               <div className="new-achievements">
                 <h3>🏆 ¡Nuevos Logros Desbloqueados!</h3>
                 <div className="achievements-list">
-                  {progressUpdate.newAchievements.map((achievement, index) => (
-                    <div key={index} className="achievement-unlocked">
-                      <span className="achievement-icon-large">{achievement.icon}</span>
-                      <div className="achievement-details">
-                        <span className="achievement-name">{achievement.name}</span>
-                        <span className="achievement-points">+{achievement.points} pts</span>
+                  {/* ✅ Usar Set para eliminar duplicados por ID */}
+                  {Array.from(new Set(newAchievements.map(a => a.id)))
+                    .map(id => newAchievements.find(a => a.id === id))
+                    .map((achievement) => (
+                      <div key={achievement.id} className="achievement-unlocked">
+                        <span className="achievement-icon-large">{achievement.icon}</span>
+                        <div className="achievement-details">
+                          <span className="achievement-name">{achievement.name}</span>
+                          <span className="achievement-points">+{achievement.points} pts</span>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
                 </div>
               </div>
             )}
 
-            {progressUpdate.levelUp && (
+            {progressUpdate && progressUpdate.levelUp && (
               <div className="level-up-notification">
                 <span className="level-up-icon">🎉</span>
                 <span className="level-up-text">¡Subiste de nivel!</span>
               </div>
             )}
-          </div>
-        )}
-
-        {/* ✨ NUEVOS LOGROS DEL SISTEMA MEJORADO */}
-        {newAchievements && newAchievements.length > 0 && (
-          <div className="achievements-banner enhanced">
-            <div className="new-achievements">
-              <h3>🎖️ ¡Logros Desbloqueados!</h3>
-              <div className="achievements-grid">
-                {newAchievements.map((achievement, index) => (
-                  <div key={achievement.id} className={`achievement-card tier-${achievement.tier}`}>
-                    <div className="achievement-tier-badge">{achievement.tier}</div>
-                    <div className="achievement-icon-xl">{achievement.icon}</div>
-                    <div className="achievement-info">
-                      <div className="achievement-name">{achievement.name}</div>
-                      <div className="achievement-description">{achievement.description}</div>
-                      <div className="achievement-category">{achievement.category}</div>
-                      <div className="achievement-points-badge">+{achievement.points} pts</div>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
           </div>
         )}
 
@@ -613,7 +687,22 @@ const ResultsScreen = ({ onNavigate, results }) => {
           <button className="action-button secondary" onClick={() => onNavigate('home')}>
             🏠 Volver al Inicio
           </button>
-          <button className="action-button primary" onClick={() => onNavigate('analysis')}>
+          
+          {/* 🆕 Botón para repasar solo preguntas incorrectas */}
+          {incorrectStats && incorrectStats.total > 0 && (
+            <button 
+              className="action-button warning" 
+              onClick={handleRetryIncorrect}
+              title={`Tienes ${incorrectStats.total} pregunta(s) que necesitan repaso`}
+            >
+              🔄 Repasar Incorrectas ({incorrectStats.total})
+            </button>
+          )}
+          
+          <button
+            className="action-button primary"
+            onClick={() => onNavigate('analysis', { results }, 'quiz-complete')}
+          >
             📊 Ver Análisis Detallado
           </button>
         </div>

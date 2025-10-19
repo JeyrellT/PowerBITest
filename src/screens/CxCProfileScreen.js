@@ -1,5 +1,6 @@
 import React, { useContext, useMemo } from 'react';
 import { CxCProgressContext } from '../contexts/CxCProgressContext';
+import { useQuizStats } from '../hooks/useQuizStats';
 import BadgeDisplay from '../components/cxc/BadgeDisplay';
 import ProgressRing from '../components/cxc/ProgressRing';
 import { MISSIONS } from '../data/cxc/missions';
@@ -13,6 +14,9 @@ import '../styles/CxCProfileScreen.css';
 const CxCProfileScreen = ({ onNavigate }) => {
   const navigate = React.useMemo(() => onNavigate || (() => {}), [onNavigate]);
   const { progress } = useContext(CxCProgressContext);
+  
+  // ✅ Usar hook personalizado para estadísticas de quizzes sin duplicación
+  const quizStats = useQuizStats();
 
   // Calcular estadísticas globales
   const stats = useMemo(() => {

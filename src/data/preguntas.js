@@ -2752,8 +2752,16 @@ export function getFilteredQuestions(dominio = null, nivel = null, cantidad = nu
   // ✅ FIX 2: Sistema de exclusión inteligente
   const questionTracking = options.questionTracking || {};
   const excludeMasteredOnly = options.excludeMasteredOnly || false;
+  const includeSpecific = options.includeSpecific || null; // 🆕 Lista de IDs específicos a incluir
   
-  if (excludeMasteredOnly) {
+  // 🆕 Modo INCLUIR ESPECÍFICO: Solo estas preguntas
+  if (includeSpecific && Array.isArray(includeSpecific) && includeSpecific.length > 0) {
+    console.log('🔍 Filtrando solo preguntas específicas:', includeSpecific);
+    todasLasPreguntas = todasLasPreguntas.filter(p => includeSpecific.includes(p.id));
+    console.log('✅ Preguntas filtradas:', todasLasPreguntas.length, 'de', includeSpecific.length, 'solicitadas');
+  }
+  // Modo EXCLUIR DOMINADAS: Excluir solo las que están muy bien dominadas
+  else if (excludeMasteredOnly) {
     // Solo excluir preguntas DOMINADAS (mastered/retired)
     todasLasPreguntas = todasLasPreguntas.filter(p => {
       const tracking = questionTracking[p.id];
@@ -2767,7 +2775,9 @@ export function getFilteredQuestions(dominio = null, nivel = null, cantidad = nu
       
       return !isDominated; // Incluir si NO está dominada
     });
-  } else if (preguntasExcluidas && preguntasExcluidas.length > 0) {
+  }
+  // Modo LEGACY: Excluir lista específica
+  else if (preguntasExcluidas && preguntasExcluidas.length > 0) {
     // Modo legacy: excluir todas las preguntas respondidas
     todasLasPreguntas = todasLasPreguntas.filter(p => !preguntasExcluidas.includes(p.id));
   }

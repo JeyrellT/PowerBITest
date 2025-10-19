@@ -225,13 +225,16 @@ export function generarRutasDeEstudio(resultadosCategorias, nivelBloom, puntuaci
     const nivel = debilidad.porcentaje < 30 ? 'critico' : 
                   debilidad.porcentaje < 50 ? 'bajo' : 'medio';
     
+    // ✅ VALIDACIÓN DEFENSIVA: Verificar que la categoría existe en nivelBloom
+    const bloomNivel = nivelBloom[debilidad.categoria] || 'recordar'; // Default a 'recordar'
+    
     recomendaciones.push({
       prioridad: index + 1,
       tipo: 'reforzar',
       categoria: debilidad.categoria,
       nivelActual: debilidad.porcentaje,
       nivel,
-      mensaje: generarMensajeRefuerzo(debilidad.categoria, nivel, nivelBloom[debilidad.categoria]),
+      mensaje: generarMensajeRefuerzo(debilidad.categoria, nivel, bloomNivel),
       recursos: obtenerRecursos(debilidad.categoria, nivel),
       accionSugerida: obtenerAccionSugerida(debilidad.categoria, nivel)
     });
@@ -239,12 +242,15 @@ export function generarRutasDeEstudio(resultadosCategorias, nivelBloom, puntuaci
 
   // Generar recomendaciones para fortalezas
   fortalezas.forEach(fortaleza => {
+    // ✅ VALIDACIÓN DEFENSIVA: Verificar que la categoría existe en nivelBloom
+    const bloomNivel = nivelBloom[fortaleza.categoria] || 'aplicar'; // Default a 'aplicar' para fortalezas
+    
     recomendaciones.push({
       prioridad: debilidades.length + 1,
       tipo: 'potenciar',
       categoria: fortaleza.categoria,
       nivelActual: fortaleza.porcentaje,
-      mensaje: generarMensajePotenciacion(fortaleza.categoria, nivelBloom[fortaleza.categoria]),
+      mensaje: generarMensajePotenciacion(fortaleza.categoria, bloomNivel),
       recursos: obtenerRecursosAvanzados(fortaleza.categoria),
       accionSugerida: obtenerAccionAvanzada(fortaleza.categoria)
     });
@@ -342,6 +348,13 @@ function generarResumenEjecutivo(puntuacion, numFortalezas, numDebilidades) {
 }
 
 function obtenerRecursos(categoria, nivel) {
+  // ✅ VALIDACIÓN DEFENSIVA: Si categoria o nivel son undefined/null, retornar recurso genérico
+  if (!categoria || !nivel) {
+    return [
+      { tipo: 'documentación', nombre: 'Documentación de Power BI', url: 'https://learn.microsoft.com/es-es/power-bi/' }
+    ];
+  }
+
   // Base de datos de recursos por categoría y nivel
   const recursos = {
     'DAX y Cálculos': {
@@ -368,11 +381,40 @@ function obtenerRecursos(categoria, nivel) {
       medio: [
         { tipo: 'proyecto', nombre: 'Crea un Dashboard Interactivo', url: '#' }
       ]
+    },
+    // ✅ NUEVAS CATEGORÍAS para evitar errores
+    'Transformación de Datos': {
+      critico: [
+        { tipo: 'curso', nombre: 'Power Query - Microsoft Learn', url: 'https://learn.microsoft.com/es-es/power-query/' }
+      ],
+      bajo: [
+        { tipo: 'curso', nombre: 'Transformación Avanzada de Datos', url: '#' }
+      ],
+      medio: [
+        { tipo: 'ejercicios', nombre: 'Ejercicios de Power Query', url: '#' }
+      ]
+    },
+    'Workspaces y Colaboración': {
+      critico: [
+        { tipo: 'curso', nombre: 'Fundamentos de Power BI Service', url: 'https://learn.microsoft.com/es-es/power-bi/collaborate-share/' }
+      ],
+      bajo: [
+        { tipo: 'curso', nombre: 'Administración de Workspaces', url: '#' }
+      ],
+      medio: [
+        { tipo: 'guía', nombre: 'Mejores prácticas de colaboración', url: '#' }
+      ]
     }
-    // Agregar más categorías según necesidad
   };
 
-  return recursos[categoria]?.[nivel] || [
+  // ✅ Retornar recursos de la categoría, o genérico si no existe
+  const recursosPorCategoria = recursos[categoria];
+  if (recursosPorCategoria && recursosPorCategoria[nivel]) {
+    return recursosPorCategoria[nivel];
+  }
+  
+  // Fallback genérico
+  return [
     { tipo: 'documentación', nombre: `Documentación de ${categoria}`, url: 'https://learn.microsoft.com/es-es/power-bi/' }
   ];
 }
