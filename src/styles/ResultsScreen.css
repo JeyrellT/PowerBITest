@@ -1144,6 +1144,15 @@
   color: #6b7280 !important;
 }
 
+/* Asegurar contraste en score-number y detalles dentro de score-card en modo claro */
+[data-theme="light"] .score-card .score-number,
+[data-theme="light"] .score-card .score-label,
+[data-theme="light"] .score-card .score-details {
+  color: #0F172A !important;
+  font-weight: 800;
+  text-shadow: none;
+}
+
 [data-theme="light"] .stat-card {
   background: rgba(255, 255, 255, 0.95);
   border: 1px solid rgba(91, 33, 182, 0.15);

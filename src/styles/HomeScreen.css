@@ -1152,9 +1152,14 @@
   font-weight: 700;
   margin-bottom: 2rem;
   text-align: center;
-  color: #FFFFFF !important;
-  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.4);
   letter-spacing: 0.01em;
+}
+
+/* Modo claro - negro puro para máximo contraste */
+[data-theme="light"] .section-title {
+  color: #0F172A !important;
+  text-shadow: none;
+  font-weight: 800;
 }
 
 /* Modo oscuro - blanco puro siempre visible */
@@ -1208,12 +1213,17 @@
 .domain-name {
   font-weight: 700;
   font-size: 1.15rem;
-  color: #FFFFFF !important;
   letter-spacing: 0.01em;
-  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
   display: flex;
   align-items: center;
   gap: 0.5rem;
+}
+
+/* Modo claro - negro para máximo contraste */
+[data-theme="light"] .domain-name {
+  color: #0F172A !important;
+  text-shadow: none;
+  font-weight: 800;
 }
 
 /* Asegurar blanco puro en modo oscuro */
@@ -1223,11 +1233,16 @@
 }
 
 .domain-percentage {
-  color: #22D3EE !important;
   font-weight: 800;
   font-size: 1.4rem;
   letter-spacing: -0.02em;
-  text-shadow: 0 0 12px rgba(34, 211, 238, 0.5);
+}
+
+/* Modo claro - púrpura oscuro para contraste */
+[data-theme="light"] .domain-percentage {
+  color: #5B21B6 !important;
+  text-shadow: none;
+  font-weight: 900;
 }
 
 /* Cyan brillante en modo oscuro */
@@ -2483,4 +2498,160 @@
 /* Asegurar partículas no molesten en modo claro */
 [data-theme="light"] .particles-background {
   opacity: 0.15;
+}
+
+/* ============================================
+   MEJORAS MODO OSCURO - TARJETAS CIRCULARES
+   ============================================ */
+
+/* 1. Textos Principales - Modo Oscuro */
+[data-theme="dark"] .circular-progress-text {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+  font-weight: 700;
+}
+
+[data-theme="dark"] .progress-value {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.9);
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+[data-theme="dark"] .progress-label {
+  color: rgba(255, 255, 255, 0.95) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.7);
+  font-weight: 600;
+}
+
+/* 2. Títulos de Tarjetas - Modo Oscuro */
+[data-theme="dark"] .card-title {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7);
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+/* 3. Detalles y Subtextos - Modo Oscuro */
+[data-theme="dark"] .stat-details,
+[data-theme="dark"] .card-detail {
+  color: rgba(255, 255, 255, 0.90) !important;
+  text-shadow: 0 1px 4px rgba(0, 0, 0, 0.6);
+  font-size: 0.9rem;
+  font-weight: 500;
+}
+
+[data-theme="dark"] .progress-sublabel {
+  color: rgba(255, 255, 255, 0.85) !important;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+}
+
+/* 4. Fondo de Tarjetas - Modo Oscuro */
+[data-theme="dark"] .stat-card-circular {
+  background: rgba(15, 15, 35, 0.85) !important;
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  box-shadow: 
+    0 8px 32px rgba(0, 0, 0, 0.6),
+    inset 0 1px 0 rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(20px);
+}
+
+/* 6. Emojis Modo Oscuro */
+[data-theme="dark"] .card-emoji {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 4px 8px rgba(0, 0, 0, 0.8));
+}
+
+/* 7. Título de Sección - Modo Oscuro */
+[data-theme="dark"] .stats-section .section-title {
+  color: #FFFFFF !important;
+  text-shadow: 0 2px 10px rgba(0, 0, 0, 0.8);
+  font-weight: 800;
+}
+
+/* ============================================
+   MEJORAS MODO CLARO - TARJETAS CIRCULARES
+   ============================================ */
+
+/* 1. Textos Principales - Modo Claro */
+[data-theme="light"] .circular-progress-text {
+  color: #0F172A !important;
+  text-shadow: 0 1px 2px rgba(255, 255, 255, 0.8);
+  font-weight: 800;
+}
+
+[data-theme="light"] .progress-value {
+  color: #0F172A !important;
+  text-shadow: none;
+  font-size: 1.1rem;
+  font-weight: 800;
+}
+
+[data-theme="light"] .progress-label {
+  color: #1E293B !important;
+  text-shadow: none;
+  font-weight: 700;
+}
+
+/* 2. Títulos de Tarjetas - Modo Claro */
+[data-theme="light"] .card-title {
+  color: #0F172A !important;
+  text-shadow: none;
+  font-weight: 800;
+  font-size: 1.1rem;
+}
+
+/* 3. Detalles y Subtextos - Modo Claro */
+[data-theme="light"] .stat-details,
+[data-theme="light"] .card-detail {
+  color: #334155 !important;
+  text-shadow: none;
+  font-size: 0.9rem;
+  font-weight: 600;
+}
+
+[data-theme="light"] .progress-sublabel {
+  color: #475569 !important;
+  text-shadow: none;
+  font-weight: 500;
+}
+
+/* 4. Fondo de Tarjetas - Modo Claro */
+[data-theme="light"] .stat-card-circular {
+  background: rgba(255, 255, 255, 0.98) !important;
+  border: 2px solid rgba(91, 33, 182, 0.25);
+  box-shadow: 
+    0 4px 20px rgba(0, 0, 0, 0.12),
+    0 1px 3px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(10px);
+}
+
+/* 5. Bordes de Color en Tarjetas - Modo Claro */
+[data-theme="light"] .accuracy-card {
+  border: 2px solid rgba(123, 63, 242, 0.4);
+}
+
+[data-theme="light"] .streak-card {
+  border: 2px solid rgba(251, 146, 60, 0.4);
+}
+
+[data-theme="light"] .level-card {
+  border: 2px solid rgba(34, 211, 238, 0.4);
+}
+
+[data-theme="light"] .quizzes-card {
+  border: 2px solid rgba(168, 85, 247, 0.4);
+}
+
+/* 6. Emojis Modo Claro */
+[data-theme="light"] .card-emoji {
+  font-size: 2.5rem;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.2));
+}
+
+/* 7. Título de Sección - Modo Claro */
+[data-theme="light"] .stats-section .section-title {
+  color: #0F172A !important;
+  text-shadow: none;
+  font-weight: 800;
 }

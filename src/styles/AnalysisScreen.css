@@ -511,3 +511,38 @@
     width: 100%;
   }
 }
+
+/* ============================================
+   MEJORAS ESPECÍFICAS MODO CLARO - CONTRASTE
+   ============================================ */
+[data-theme="light"] .analysis-header h1 {
+  color: #0F172A !important;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+[data-theme="light"] .analysis-header p {
+  color: #334155 !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .section-header h2,
+[data-theme="light"] .chart-title,
+[data-theme="light"] .recommendation-title {
+  color: #0F172A !important;
+  font-weight: 800;
+  text-shadow: none;
+}
+
+[data-theme="light"] .recommendation-text,
+[data-theme="light"] .chart-label,
+[data-theme="light"] .stat-label {
+  color: #334155 !important;
+  font-weight: 600;
+}
+
+[data-theme="light"] .stat-value,
+[data-theme="light"] .domain-percentage {
+  color: #0F172A !important;
+  font-weight: 800;
+}
