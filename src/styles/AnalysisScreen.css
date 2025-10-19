@@ -513,6 +513,162 @@
 }
 
 /* ============================================
+   TIPOGRAFÍA FLUIDA
+   ============================================ */
+.analysis-header h1 {
+  font-size: clamp(1.75rem, 4vw + 0.5rem, 2.5rem);
+}
+
+.recommendation-title {
+  font-size: clamp(1rem, 2vw + 0.3rem, 1.2rem);
+}
+
+/* ============================================
+   GRIDS AUTO-RESPONSIVE
+   ============================================ */
+.recommendations-grid,
+.charts-grid,
+.detailed-stats-grid,
+.next-steps-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+  gap: clamp(1rem, 2.5vw, 1.5rem);
+}
+
+/* ============================================
+   RESPONSIVE - MÓVILES PEQUEÑOS (375px)
+   ============================================ */
+@media (max-width: 375px) {
+  .analysis-screen {
+    padding: 0.75rem;
+  }
+
+  .analysis-header {
+    margin-bottom: 1.5rem;
+  }
+
+  .analysis-header h1 {
+    font-size: 1.75rem;
+  }
+
+  .recommendations-grid,
+  .charts-grid,
+  .detailed-stats-grid,
+  .next-steps-cards {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .recommendation-card,
+  .chart-card,
+  .stat-row {
+    padding: 1rem;
+  }
+
+  .chart-card.full-width {
+    grid-column: 1;
+  }
+
+  .plan-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .analysis-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .action-button {
+    width: 100%;
+    min-height: 44px;
+  }
+  
+  /* Charts con scroll horizontal para móviles pequeños */
+  .chart-container {
+    overflow-x: auto;
+    min-height: 250px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - MÓVILES (480px)
+   ============================================ */
+@media (max-width: 480px) {
+  .analysis-screen {
+    padding: 1rem;
+  }
+
+  .recommendations-grid,
+  .charts-grid,
+  .detailed-stats-grid,
+  .next-steps-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-actions {
+    flex-direction: column;
+  }
+
+  .action-button {
+    width: 100%;
+    min-height: 44px;
+  }
+  
+  .chart-card.full-width {
+    grid-column: 1;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - TABLETS (768px) - MEJORADO
+   ============================================ */
+@media (max-width: 768px) {
+  .analysis-screen {
+    padding: 1rem;
+  }
+
+  .analysis-header h1 {
+    font-size: 2rem;
+  }
+
+  .recommendations-grid,
+  .charts-grid,
+  .detailed-stats-grid,
+  .next-steps-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .chart-card.full-width {
+    grid-column: 1;
+  }
+
+  .plan-stats {
+    grid-template-columns: 1fr;
+  }
+
+  .analysis-actions {
+    flex-direction: column;
+  }
+
+  .action-button {
+    width: 100%;
+    min-height: 44px;
+  }
+  
+  /* Gráficos responsivos con scroll horizontal si es necesario */
+  .chart-container {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+  
+  /* Stat cards más compactas */
+  .stat-row {
+    padding: 1rem;
+  }
+}
+
+/* ============================================
    MEJORAS ESPECÍFICAS MODO CLARO - CONTRASTE
    ============================================ */
 [data-theme="light"] .analysis-header h1 {

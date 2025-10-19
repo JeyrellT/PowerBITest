@@ -515,3 +515,132 @@
     text-align: center;
   }
 }
+
+/* ============================================
+   RESPONSIVE - MÓVILES PEQUEÑOS (375px)
+   ============================================ */
+@media (max-width: 375px) {
+  .instructions-screen {
+    padding: 0.75rem;
+  }
+
+  .instructions-container {
+    padding: 1rem;
+    max-width: 100%;
+  }
+
+  .instructions-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .summary-card {
+    padding: 0.75rem;
+  }
+
+  .exam-guide-callout {
+    flex-direction: column;
+    align-items: stretch;
+    padding: 1rem;
+    gap: 1rem;
+  }
+
+  .callout-icon {
+    font-size: 1.5rem;
+  }
+
+  .callout-button {
+    width: 100%;
+    text-align: center;
+    min-height: 44px;
+  }
+
+  .availability-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .instructions-actions {
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+
+  .back-button,
+  .start-quiz-button {
+    width: 100%;
+    min-height: 44px;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - MÓVILES (480px)
+   ============================================ */
+@media (max-width: 480px) {
+  .instructions-container {
+    padding: 1.25rem;
+  }
+
+  .exam-guide-callout {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .callout-button {
+    width: 100%;
+    min-height: 44px;
+  }
+
+  .availability-stats {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* ============================================
+   RESPONSIVE - TABLETS (768px) - MEJORADO
+   ============================================ */
+@media (max-width: 768px) {
+  .instructions-screen {
+    padding: 1rem;
+  }
+
+  .instructions-container {
+    padding: 1.5rem;
+  }
+
+  .instructions-header h1 {
+    font-size: 2rem;
+  }
+
+  .summary-cards {
+    grid-template-columns: 1fr;
+  }
+
+  .availability-stats {
+    grid-template-columns: 1fr;
+    gap: 0.75rem;
+  }
+
+  .instructions-actions {
+    flex-direction: column;
+  }
+
+  .back-button,
+  .start-quiz-button {
+    min-height: 44px;
+  }
+
+  .exam-guide-callout {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .callout-button {
+    width: 100%;
+    text-align: center;
+    min-height: 44px;
+  }
+}
