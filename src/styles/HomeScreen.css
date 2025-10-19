@@ -2616,6 +2616,10 @@
   }
   
   /* Stats Circulares */
+  .circular-stats {
+    padding: 2rem 1rem; /* Reducir padding en mobile pero mantener espacio suficiente */
+  }
+  
   .stats-grid {
     grid-template-columns: repeat(auto-fit, minmax(min(100%, 200px), 1fr));
     gap: 1.5rem;
@@ -2682,7 +2686,7 @@
   
   /* HERO SECTION - RESPONSIVE */
   .hero-compact {
-    margin: 5rem 0 2rem; /* Aumentado de 2rem a 5rem en top para dar espacio al header fixed */
+    margin: 10rem 0 2rem; /* Aumentado a 10rem en mobile para dar espacio al header fixed expandido y menú dropdown */
     padding: 0 1rem;
   }
   
