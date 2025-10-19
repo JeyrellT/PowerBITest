@@ -1,32 +1,65 @@
+/* ============================================
+   VARIABLES DE TEMA PARA INSTRUCTIONS SCREEN
+   ============================================ */
+:root[data-theme="light"] {
+  --instructions-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --instructions-card-bg: #ffffff;
+  --instructions-text-primary: #111827;
+  --instructions-text-secondary: #4b5563;
+  --instructions-text-tertiary: #6b7280;
+  --instructions-border: rgba(91, 33, 182, 0.15);
+  --instructions-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  --instructions-section-bg: #f8f9fa;
+}
+
+:root[data-theme="dark"] {
+  --instructions-bg: linear-gradient(135deg, #0F0F23 0%, #1a1a3e 100%);
+  --instructions-card-bg: #1a1f3a;
+  --instructions-text-primary: #f9fafb;
+  --instructions-text-secondary: #d1d5db;
+  --instructions-text-tertiary: #9ca3af;
+  --instructions-border: rgba(123, 63, 242, 0.35);
+  --instructions-shadow: 0 20px 60px rgba(0,0,0,0.6);
+  --instructions-section-bg: rgba(123, 63, 242, 0.15);
+}
+
 .instructions-screen {
   min-height: 100vh;
   padding: 2rem;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--instructions-bg);
+  transition: background 0.3s ease;
 }
 
 .instructions-container {
   max-width: 900px;
   margin: 0 auto;
-  background: white;
+  background: var(--instructions-card-bg);
   border-radius: 20px;
   padding: 3rem;
-  box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+  box-shadow: var(--instructions-shadow);
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .instructions-container {
+  border: 1px solid rgba(123, 63, 242, 0.3);
 }
 
 .instructions-header {
   text-align: center;
   margin-bottom: 3rem;
-  color: #333;
+  color: var(--instructions-text-primary);
 }
 
 .instructions-header h1 {
   font-size: 2.5rem;
   margin-bottom: 0.5rem;
+  color: var(--instructions-text-primary);
+  font-weight: 800;
 }
 
 .instructions-header .subtitle {
   font-size: 1.1rem;
-  color: #666;
+  color: var(--instructions-text-secondary);
 }
 
 .config-summary {
@@ -35,9 +68,10 @@
 
 .config-summary h2 {
   font-size: 1.5rem;
-  color: #333;
+  color: var(--instructions-text-primary);
   margin-bottom: 1.5rem;
   text-align: center;
+  font-weight: 700;
 }
 
 .summary-cards {
@@ -54,6 +88,12 @@
   background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
   border-radius: 12px;
   color: white;
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+[data-theme="dark"] .summary-card {
+  background: linear-gradient(135deg, rgba(240, 147, 251, 0.3) 0%, #0d1829 100%);
+  border: 1px solid rgba(240, 147, 251, 0.3);
 }
 
 .summary-icon {
@@ -86,6 +126,13 @@
   background: linear-gradient(135deg, #0ea5e9 0%, #6366f1 100%);
   color: white;
   box-shadow: 0 12px 32px rgba(99, 102, 241, 0.35);
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .exam-guide-callout {
+  background: linear-gradient(135deg, rgba(14, 165, 233, 0.3) 0%, #0d1829 100%);
+  border: 1px solid rgba(99, 102, 241, 0.4);
+  box-shadow: 0 12px 32px rgba(99, 102, 241, 0.5);
 }
 
 .callout-icon {
@@ -115,9 +162,20 @@
   white-space: nowrap;
 }
 
+[data-theme="dark"] .callout-button {
+  background: rgba(123, 63, 242, 0.3);
+  color: #f9fafb;
+  border: 1px solid rgba(123, 63, 242, 0.5);
+}
+
 .callout-button:hover {
   transform: translateY(-2px);
   box-shadow: 0 10px 22px rgba(15, 23, 42, 0.35);
+}
+
+[data-theme="dark"] .callout-button:hover {
+  background: rgba(123, 63, 242, 0.45);
+  box-shadow: 0 10px 22px rgba(123, 63, 242, 0.5);
 }
 
 .instructions-content {
@@ -128,18 +186,40 @@
   margin-bottom: 2rem;
   padding: 1.5rem;
   border-left: 4px solid #667eea;
-  background: #f8f9fa;
+  background: var(--instructions-section-bg);
   border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .instruction-section {
+  border-left-color: #8B5CF6;
+  background: rgba(123, 63, 242, 0.15);
 }
 
 .instruction-section.highlight {
-  background: linear-gradient(135deg, #e0f7fa 0%, #e1f5fe 100%);
   border-left-color: #00bcd4;
 }
 
+[data-theme="light"] .instruction-section.highlight {
+  background: linear-gradient(135deg, #e0f7fa 0%, #e1f5fe 100%);
+}
+
+[data-theme="dark"] .instruction-section.highlight {
+  background: linear-gradient(135deg, rgba(0, 188, 212, 0.2) 0%, #0d1829 100%);
+  border: 1px solid rgba(0, 188, 212, 0.3);
+}
+
 .instruction-section.warning {
-  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
   border-left-color: #ff9800;
+}
+
+[data-theme="light"] .instruction-section.warning {
+  background: linear-gradient(135deg, #fff3e0 0%, #ffe0b2 100%);
+}
+
+[data-theme="dark"] .instruction-section.warning {
+  background: linear-gradient(135deg, rgba(255, 152, 0, 0.2) 0%, #0d1829 100%);
+  border: 1px solid rgba(255, 152, 0, 0.3);
 }
 
 .section-icon {
@@ -149,22 +229,23 @@
 
 .instruction-section h3 {
   font-size: 1.3rem;
-  color: #333;
+  color: var(--instructions-text-primary);
   margin-bottom: 1rem;
   display: flex;
   align-items: center;
   gap: 0.5rem;
+  font-weight: 700;
 }
 
 .instruction-section p {
-  color: #555;
+  color: var(--instructions-text-secondary);
   line-height: 1.8;
   margin-bottom: 1rem;
 }
 
 .instruction-section ul {
   margin-left: 1.5rem;
-  color: #555;
+  color: var(--instructions-text-secondary);
 }
 
 .instruction-section li {
@@ -191,13 +272,27 @@
 }
 
 .back-button {
-  background: #e0e0e0;
+  background: rgba(224, 224, 224, 0.9);
   color: #333;
 }
 
+[data-theme="dark"] .back-button {
+  background: rgba(123, 63, 242, 0.2);
+  color: #f9fafb;
+  border: 1px solid rgba(123, 63, 242, 0.3);
+}
+
 .back-button:hover {
-  background: #d0d0d0;
   transform: translateY(-2px);
+}
+
+[data-theme="light"] .back-button:hover {
+  background: #d0d0d0;
+}
+
+[data-theme="dark"] .back-button:hover {
+  background: rgba(123, 63, 242, 0.3);
+  border-color: rgba(123, 63, 242, 0.5);
 }
 
 .start-quiz-button {
@@ -205,9 +300,21 @@
   color: white;
 }
 
+[data-theme="dark"] .start-quiz-button {
+  background: linear-gradient(135deg, #5B21B6 0%, #0284C7 100%);
+  box-shadow: 0 6px 20px rgba(91, 33, 182, 0.4);
+}
+
 .start-quiz-button:hover {
   transform: translateY(-2px);
+}
+
+[data-theme="light"] .start-quiz-button:hover {
   box-shadow: 0 8px 20px rgba(102, 126, 234, 0.4);
+}
+
+[data-theme="dark"] .start-quiz-button:hover {
+  box-shadow: 0 8px 30px rgba(91, 33, 182, 0.6);
 }
 
 /* ============================================
@@ -219,21 +326,50 @@
   border-radius: 12px;
   border: 2px solid;
   background: rgba(255, 255, 255, 0.95);
+  transition: all 0.3s ease;
+}
+
+[data-theme="dark"] .questions-availability {
+  background: rgba(26, 31, 58, 0.6);
 }
 
 .questions-availability.success {
   border-color: #10b981;
+}
+
+[data-theme="light"] .questions-availability.success {
   background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, rgba(16, 185, 129, 0.05) 100%);
+}
+
+[data-theme="dark"] .questions-availability.success {
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, #0d1829 100%);
+  border: 1px solid rgba(16, 185, 129, 0.4);
 }
 
 .questions-availability.info {
   border-color: #3b82f6;
+}
+
+[data-theme="light"] .questions-availability.info {
   background: linear-gradient(135deg, rgba(59, 130, 246, 0.1) 0%, rgba(59, 130, 246, 0.05) 100%);
+}
+
+[data-theme="dark"] .questions-availability.info {
+  background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, #0d1829 100%);
+  border: 1px solid rgba(59, 130, 246, 0.4);
 }
 
 .questions-availability.warning {
   border-color: #f59e0b;
+}
+
+[data-theme="light"] .questions-availability.warning {
   background: linear-gradient(135deg, rgba(245, 158, 11, 0.1) 0%, rgba(245, 158, 11, 0.05) 100%);
+}
+
+[data-theme="dark"] .questions-availability.warning {
+  background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, #0d1829 100%);
+  border: 1px solid rgba(245, 158, 11, 0.4);
 }
 
 .availability-header {
@@ -259,10 +395,18 @@
   color: #1f2937;
 }
 
+[data-theme="dark"] .availability-message {
+  color: var(--instructions-text-primary);
+}
+
 .availability-suggestion {
   margin: 0;
   font-size: 0.9rem;
   color: #6b7280;
+}
+
+[data-theme="dark"] .availability-suggestion {
+  color: var(--instructions-text-secondary);
 }
 
 .availability-stats {
@@ -274,6 +418,10 @@
   border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 
+[data-theme="dark"] .availability-stats {
+  border-top: 1px solid rgba(123, 63, 242, 0.2);
+}
+
 .stat-item {
   text-align: center;
 }
@@ -283,6 +431,10 @@
   font-size: 0.85rem;
   color: #6b7280;
   margin-bottom: 0.25rem;
+}
+
+[data-theme="dark"] .stat-label {
+  color: var(--instructions-text-tertiary);
 }
 
 .stat-value {
@@ -313,8 +465,18 @@
   color: #92400e;
 }
 
+[data-theme="dark"] .availability-warning {
+  background: rgba(245, 158, 11, 0.2);
+  border-left-color: rgba(245, 158, 11, 0.6);
+  color: #fbbf24;
+}
+
 .availability-warning strong {
   color: #78350f;
+}
+
+[data-theme="dark"] .availability-warning strong {
+  color: #fcd34d;
 }
 
 @media (max-width: 768px) {
