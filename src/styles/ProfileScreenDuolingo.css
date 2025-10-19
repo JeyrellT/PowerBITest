@@ -2224,3 +2224,327 @@
 .contain-paint {
   contain: paint;
 }
+
+/* ============================================
+   RESPONSIVE DESIGN - MOBILE FIRST
+   ============================================ */
+
+/* Tablet y Desktop pequeño */
+@media (max-width: 768px) {
+  /* Header ajustes */
+  .duo-header-mega {
+    padding: clamp(1rem, 3vw, 2rem);
+    gap: 20px;
+  }
+
+  .header-content-duo {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 16px;
+  }
+
+  .avatar-section-mega {
+    gap: 12px;
+  }
+
+  .avatar-mega {
+    width: 100px;
+    height: 100px;
+  }
+
+  .level-icon-mega {
+    width: 3rem;
+    height: 3rem;
+    font-size: 1.5rem;
+  }
+
+  .profile-info-duo {
+    gap: 8px;
+  }
+
+  .profile-title-duo {
+    font-size: clamp(1.75rem, 5vw, 2.5rem);
+  }
+
+  .profile-subtitle-duo {
+    font-size: clamp(0.9rem, 2vw, 1rem);
+  }
+
+  .xp-progress-container {
+    gap: 12px;
+  }
+
+  .xp-text-duo {
+    font-size: clamp(1.2rem, 3vw, 1.5rem);
+  }
+
+  .xp-subtext {
+    font-size: 0.8rem;
+  }
+
+  .progress-bar-duo {
+    height: 12px;
+  }
+
+  .stats-grid-duo {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+  }
+
+  .stat-card-duo {
+    padding: 12px;
+  }
+
+  .stat-number-duo {
+    font-size: clamp(1.5rem, 4vw, 2rem);
+  }
+
+  .stat-label-duo {
+    font-size: 0.8rem;
+  }
+
+  /* Tabs ajustes */
+  .tabs-duo-mega {
+    gap: 6px;
+    padding: 6px;
+    margin-bottom: 20px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: thin;
+    scrollbar-color: var(--duo-green) rgba(255, 255, 255, 0.1);
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .tabs-duo-mega::-webkit-scrollbar {
+    height: 6px;
+  }
+
+  .tabs-duo-mega::-webkit-scrollbar-track {
+    background: rgba(255, 255, 255, 0.05);
+    border-radius: 3px;
+  }
+
+  .tabs-duo-mega::-webkit-scrollbar-thumb {
+    background: var(--duo-green);
+    border-radius: 3px;
+  }
+
+  .tab-btn-duo {
+    padding: 12px 16px;
+    font-size: clamp(0.85rem, 2vw, 1rem);
+    flex-shrink: 0;
+    min-width: fit-content;
+    white-space: nowrap;
+  }
+
+  .tab-icon {
+    font-size: 1.2rem;
+  }
+
+  /* Grid ajustes */
+  .quick-stats-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .overview-duo {
+    gap: 20px;
+  }
+
+  .activity-calendar-container {
+    padding: 16px;
+  }
+
+  .achievements-grid {
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 12px;
+  }
+
+  .achievement-card-duo {
+    padding: 16px;
+  }
+
+  .domains-analysis-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .domain-card-detailed {
+    padding: 16px;
+  }
+
+  .domain-name-detailed {
+    font-size: clamp(1rem, 2.5vw, 1.2rem);
+  }
+
+  /* Botones touch-friendly */
+  .tab-btn-duo {
+    min-height: 44px;
+  }
+
+  .stat-card-duo {
+    min-height: 44px;
+  }
+}
+
+/* Mobile */
+@media (max-width: 480px) {
+  .duo-header-mega {
+    padding: 1rem;
+    gap: 16px;
+  }
+
+  .avatar-mega {
+    width: 80px;
+    height: 80px;
+  }
+
+  .level-icon-mega {
+    width: 2.5rem;
+    height: 2.5rem;
+    font-size: 1.25rem;
+  }
+
+  .profile-title-duo {
+    font-size: clamp(1.5rem, 6vw, 2rem);
+  }
+
+  .profile-subtitle-duo {
+    font-size: 0.85rem;
+  }
+
+  .xp-text-duo {
+    font-size: clamp(1rem, 4vw, 1.3rem);
+  }
+
+  .stats-grid-duo {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .stat-card-duo {
+    padding: 10px;
+  }
+
+  .stat-number-duo {
+    font-size: clamp(1.25rem, 5vw, 1.75rem);
+  }
+
+  .tabs-duo-mega {
+    gap: 4px;
+    padding: 4px;
+    margin-bottom: 16px;
+  }
+
+  .tab-btn-duo {
+    padding: 10px 12px;
+    font-size: 0.85rem;
+    gap: 6px;
+  }
+
+  .tab-icon {
+    font-size: 1rem;
+  }
+
+  .quick-stats-grid {
+    gap: 12px;
+  }
+
+  .quick-stat-card {
+    padding: 16px;
+  }
+
+  .achievements-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .achievement-card-duo {
+    padding: 12px;
+  }
+
+  .activity-calendar-container {
+    padding: 12px;
+  }
+
+  .domain-card-detailed {
+    padding: 12px;
+  }
+}
+
+/* iPhone SE y dispositivos muy pequeños */
+@media (max-width: 375px) {
+  .duo-header-mega {
+    padding: 0.75rem;
+    gap: 12px;
+  }
+
+  .avatar-mega {
+    width: 70px;
+    height: 70px;
+  }
+
+  .level-icon-mega {
+    width: 2rem;
+    height: 2rem;
+    font-size: 1rem;
+  }
+
+  .profile-title-duo {
+    font-size: 1.5rem;
+  }
+
+  .profile-subtitle-duo {
+    font-size: 0.8rem;
+  }
+
+  .xp-text-duo {
+    font-size: 1rem;
+  }
+
+  .xp-subtext {
+    font-size: 0.7rem;
+  }
+
+  .progress-bar-duo {
+    height: 10px;
+  }
+
+  .stat-card-duo {
+    padding: 8px;
+  }
+
+  .stat-number-duo {
+    font-size: 1.25rem;
+  }
+
+  .stat-label-duo {
+    font-size: 0.7rem;
+  }
+
+  .tab-btn-duo {
+    padding: 8px 10px;
+    font-size: 0.8rem;
+  }
+
+  .tab-icon {
+    font-size: 0.9rem;
+  }
+
+  .quick-stat-card {
+    padding: 12px;
+  }
+
+  .achievement-card-duo {
+    padding: 10px;
+  }
+
+  .activity-calendar-container {
+    padding: 10px;
+  }
+
+  .domain-card-detailed {
+    padding: 10px;
+  }
+}

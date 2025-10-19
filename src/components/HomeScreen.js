@@ -27,6 +27,8 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
   const [showQuickStats, setShowQuickStats] = useState(false);
   const [availableCount, setAvailableCount] = useState(0);
   const [showConfigMenu, setShowConfigMenu] = useState(false);
+  const [isHeaderVisible, setIsHeaderVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
   
   // ✅ ÚNICA FUENTE DE VERDAD: useCxCProgress
   const { getAnsweredQuestions, state } = useCxCProgress();
@@ -70,6 +72,33 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
       document.removeEventListener('mousedown', handleClickOutside);
     };
   }, [showConfigMenu]);
+
+  // Ocultar/mostrar header al hacer scroll
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      // Solo ocultar si el scroll es mayor a 100px
+      if (currentScrollY < 100) {
+        setIsHeaderVisible(true);
+      } else {
+        // Si scrollea hacia abajo, ocultar header
+        // Si scrollea hacia arriba, mostrar header
+        if (currentScrollY > lastScrollY) {
+          setIsHeaderVisible(false);
+        } else {
+          setIsHeaderVisible(true);
+        }
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    return () => {
+      window.removeEventListener('scroll', handleScroll);
+    };
+  }, [lastScrollY]);
 
   // Actualizar contador cuando cambian los filtros
   useEffect(() => {
@@ -280,7 +309,7 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
       </div>
 
       {/* Navegación Superior Siempre Visible */}
-      <div className="global-progress">
+      <div className={`global-progress ${isHeaderVisible ? 'header-visible' : 'header-hidden'}`}>
         {userStats && userStats.quizzesTaken > 0 && userStats.levelInfo && (
           <div className="progress-info">
             <div className="level-badge">
