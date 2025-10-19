@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import './styles/App.css';
 import OnboardingFlow from './components/onboarding/OnboardingFlow';
 import HomeScreen from './components/HomeScreen';
@@ -25,6 +25,18 @@ function AppContent() {
   
   // Hook del paywall desde el contexto
   const { shouldShowPaywall, unlockApp } = usePaywall();
+
+  // ✅ SCROLL AL TOP CADA VEZ QUE CAMBIA LA PANTALLA (importante para móvil)
+  useEffect(() => {
+    window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+    // También resetear scroll en body y documentElement
+    if (document.body) {
+      document.body.scrollTop = 0;
+    }
+    if (document.documentElement) {
+      document.documentElement.scrollTop = 0;
+    }
+  }, [currentScreen]); // Se ejecuta cada vez que cambia la pantalla
 
   const handleOnboardingComplete = (profile) => {
     // El perfil ahora se maneja globalmente por el contexto

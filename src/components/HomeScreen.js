@@ -63,6 +63,18 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
     setTimeout(() => setShowQuickStats(true), 300);
   }, []); // Solo ejecutar una vez al montar
 
+  // ✅ FORZAR SCROLL AL TOP AL MONTAR EL COMPONENTE (especialmente importante en móvil)
+  useEffect(() => {
+    window.scrollTo(0, 0);
+    // También restaurar scroll en el body si tiene
+    if (document.body) {
+      document.body.scrollTop = 0;
+    }
+    if (document.documentElement) {
+      document.documentElement.scrollTop = 0;
+    }
+  }, []);
+
   // Cerrar menú al hacer clic fuera
   useEffect(() => {
     const handleClickOutside = (event) => {

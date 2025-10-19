@@ -1,0 +1,42 @@
+/* ============================================
+   ESTILOS BASE - SCROLL Y NAVEGACIÓN
+   ============================================ */
+
+/* Asegurar que la página siempre inicie desde arriba */
+html {
+  scroll-behavior: smooth;
+}
+
+/* Resetear scroll position en navegación */
+html, body {
+  overflow-x: hidden;
+  position: relative;
+  scroll-padding-top: 0;
+}
+
+/* Prevenir scroll restoration automático del navegador */
+body {
+  overscroll-behavior-y: none;
+}
+
+/* Asegurar que en móvil el contenido inicie desde arriba */
+#root {
+  min-height: 100vh;
+  position: relative;
+}
+
+/* Fix para Safari en iOS */
+@supports (-webkit-touch-callout: none) {
+  body {
+    /* Fix para bounce scroll en iOS */
+    position: fixed;
+    overflow: hidden;
+    width: 100%;
+  }
+  
+  #root {
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    height: 100vh;
+  }
+}
