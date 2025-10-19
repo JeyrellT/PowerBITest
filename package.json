@@ -2,7 +2,7 @@
   "name": "pl300-quiz-app",
   "version": "1.0.0",
   "private": true,
-  "homepage": "https://JeyrellT.github.io/PL300PB",
+  "homepage": "https://JeyrellT.github.io/PowerBITest",
   "dependencies": {
     "ajv": "^8.17.1",
     "ajv-formats": "^2.1.1",
