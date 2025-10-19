@@ -16,7 +16,6 @@ const ResultsScreen = ({ onNavigate, results }) => {
   const isProcessing = useRef(false);
   const resultsProcessed = useRef(new Set());
   const processedTimestamp = useRef(null);
-  const hasProcessedResults = useRef(false); // 🆕 Flag definitivo
 
   // ✅ ÚNICA FUENTE DE VERDAD: useCxCProgress
   const {
@@ -72,12 +71,6 @@ const ResultsScreen = ({ onNavigate, results }) => {
       return;
     }
 
-    // 🆕 VERIFICACIÓN DEFINITIVA: Si ya procesamos CUALQUIER resultado, salir
-    if (hasProcessedResults.current) {
-      console.log('⛔ Resultado ya procesado definitivamente, ignorando');
-      return;
-    }
-
     // ✅ GENERAR ID ÚNICO MÁS ROBUSTO (incluir timestamp de creación del resultado)
     const resultTimestamp = results.timestamp || Date.now();
     const quizSignature = JSON.stringify({
@@ -88,17 +81,17 @@ const ResultsScreen = ({ onNavigate, results }) => {
     });
     const quizId = `${resultTimestamp}_${btoa(quizSignature).substring(0, 10)}`;
     
-    const currentTime = Date.now();
-    
-    // ⚠️ VERIFICACIÓN GLOBAL CON SIGNATURE
+    // 🆕 VERIFICACIÓN DEFINITIVA: Si ya procesamos ESTE resultado específico, salir
     if (resultsProcessed.current.has(quizId)) {
-      console.log('⏭️ Quiz con signature ya procesado:', quizId);
+      console.log('⛔ Resultado ya procesado definitivamente, ignorando:', quizId);
       return;
     }
     
-    // ⚠️ VERIFICACIÓN TEMPORAL: < 500ms desde último procesamiento
-    if (processedTimestamp.current && (currentTime - processedTimestamp.current) < 500) {
-      console.log('⏸️ Procesamiento muy reciente (< 500ms), ignorando');
+    const currentTime = Date.now();
+    
+    // ⚠️ VERIFICACIÓN TEMPORAL: < 1000ms desde último procesamiento
+    if (processedTimestamp.current && (currentTime - processedTimestamp.current) < 1000) {
+      console.log('⏸️ Procesamiento muy reciente (< 1s), ignorando');
       return;
     }
     
@@ -110,7 +103,6 @@ const ResultsScreen = ({ onNavigate, results }) => {
     
     // 🔒 BLOQUEO INMEDIATO Y DEFINITIVO
     isProcessing.current = true;
-    hasProcessedResults.current = true; // 🆕 Marcar como procesado PERMANENTEMENTE
     processedQuizId.current = quizId;
     resultsProcessed.current.add(quizId);
     processedTimestamp.current = currentTime;
@@ -132,42 +124,11 @@ const ResultsScreen = ({ onNavigate, results }) => {
     
     // 🎯 INTEGRACIÓN SIMPLIFICADA - EVITAR DUPLICACIONES
     
-    // 1. Procesar cada pregunta UNA SOLA VEZ con el tracking centralizado
-    results.questions.forEach((question, index) => {
-      const userAnswer = results.answers[index];
-      if (userAnswer !== undefined) {
-        const isCorrect = userAnswer === question.respuestaCorrecta;
-        const timeSpent = results.timeElapsed / results.questions.length; // Promedio
-        
-        console.log(`📝 Guardando pregunta ${question.id}:`, {
-          isCorrect,
-          timeSpent,
-          domain: question.dominio,
-          level: question.nivel
-        });
-        
-        // ✅ Registrar en el contexto centralizado con metadata completa
-        recordQuestionAttempt(
-          question.id,
-          isCorrect,
-          timeSpent,
-          {
-            domain: question.dominio,
-            level: question.nivel,
-            subdominio: question.subdominio || 'otros',
-            format: question.formato || 'opcion-multiple',
-            difficulty: question.trampaComun ? 'trick' : 'normal'
-          }
-        );
-        
-        // ✅ Solo guardar como respondida si es correcta (las incorrectas vuelven al pool)
-        if (isCorrect) {
-          saveAnsweredQuestion(question.id);
-        }
-      }
-    });
+    // ✅ SOLUCIÓN CRÍTICA: NO registrar preguntas individualmente aquí
+    // updateProgressAfterQuiz ya se encarga de TODO el procesamiento
+    // Registrar individualmente causa DUPLICACIÓN de datos
     
-    console.log('✅ Todas las preguntas procesadas');
+    console.log('📋 Preparando datos para updateProgressAfterQuiz (sin duplicar tracking)');
 
     // 2. Calcular detalles de preguntas para el progreso
     const questionDetails = results.questions.map((question, index) => ({
@@ -180,6 +141,7 @@ const ResultsScreen = ({ onNavigate, results }) => {
 
     // 3. Preparar datos para actualizar progreso
     const quizResultsData = {
+      quizId, // ✅ CRÍTICO: Pasar el ID único del quiz para prevenir duplicación
       totalQuestions: results.questions.length,
       correctAnswers: Object.keys(results.answers).filter((index) => 
         results.answers[index] === results.questions[index].respuestaCorrecta
@@ -226,10 +188,14 @@ const ResultsScreen = ({ onNavigate, results }) => {
       isProcessing.current = false;
     }, 100);
     
-    // ✅ Cleanup: NO resetear hasProcessedResults en cleanup
-    return () => {
+    // ✅ Cleanup: Liberar lock después de un tiempo razonable
+    const timeoutId = setTimeout(() => {
       isProcessing.current = false;
-      // NO resetear hasProcessedResults.current aquí
+    }, 2000); // Liberar lock después de 2 segundos
+    
+    return () => {
+      clearTimeout(timeoutId);
+      isProcessing.current = false;
     };
   }, [
     results, 

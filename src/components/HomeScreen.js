@@ -1,8 +1,9 @@
 import React, { useState, useContext, useEffect } from 'react';
 import { ThemeContext } from '../contexts/ThemeContext';
 import { useCxCProgress } from '../contexts/CxCProgressContext';
+import { usePaywall } from '../contexts/PaywallContext';
 import { useQuizStats, useQuizDuplicateDetection } from '../hooks/useQuizStats';
-import { questionCounter } from '../utils/questionCounter';
+import { getAvailableQuestionsCount } from '../data/preguntas';
 import '../styles/HomeScreen.css';
 
 const CIRCLE_RADIUS = 55;
@@ -31,7 +32,10 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
   const [lastScrollY, setLastScrollY] = useState(0);
   
   // ✅ ÚNICA FUENTE DE VERDAD: useCxCProgress
-  const { getAnsweredQuestions, state } = useCxCProgress();
+  const { getAllQuestionsTracking } = useCxCProgress();
+  
+  // 🔒 Hook del Paywall para mostrar contador
+  const { answeredCount, questionLimit, isUnlocked, getRemainingQuestions } = usePaywall();
   
   // ✅ NUEVO: Usar hook personalizado para estadísticas sin duplicación
   const userStats = useQuizStats();
@@ -57,7 +61,7 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
   useEffect(() => {
     // Mostrar stats después de un momento
     setTimeout(() => setShowQuickStats(true), 300);
-  }, [state.totalPoints, state.totalXP]); // Recargar cuando cambien puntos o XP
+  }, []); // Solo ejecutar una vez al montar
 
   // Cerrar menú al hacer clic fuera
   useEffect(() => {
@@ -100,13 +104,27 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
     };
   }, [lastScrollY]);
 
-  // Actualizar contador cuando cambian los filtros
+  // 🆕 Actualizar contador cuando cambian los filtros
   useEffect(() => {
-    // ✅ Obtener preguntas respondidas del contexto y pasarlas al contador
-    const answeredIds = getAnsweredQuestions();
-    const count = questionCounter.countAvailable(selectedDomain, selectedLevel, true, answeredIds);
+    const questionTracking = getAllQuestionsTracking();
+    
+    // Usar la misma lógica que QuizScreen
+    const count = getAvailableQuestionsCount(
+      selectedDomain === 'all' ? null : selectedDomain,
+      selectedLevel === 'all' ? null : selectedLevel,
+      {
+        questionTracking,
+        excludeMasteredOnly: true // Misma lógica del quiz
+      }
+    );
+    
     setAvailableCount(count);
-  }, [selectedDomain, selectedLevel, getAnsweredQuestions]);
+    
+    // 🆕 Auto-ajustar numberOfQuestions si excede el disponible
+    if (count > 0 && numberOfQuestions > count) {
+      setNumberOfQuestions(count);
+    }
+  }, [selectedDomain, selectedLevel, getAllQuestionsTracking, numberOfQuestions]);
 
   const domains = [
     { value: 'all', label: 'Todos los Dominios', icon: '🎯' },
@@ -382,18 +400,14 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
                 </button>
                 {onResetProfile && (
                   <button 
-                    className="config-menu-item"
-                    onClick={() => {
-                      setShowConfigMenu(false);
-                      if (window.confirm('¿Estás seguro de que quieres reiniciar tu perfil?')) {
-                        onResetProfile();
-                      }
-                    }}
+                    className="config-menu-item disabled"
+                    disabled
+                    title="Función deshabilitada temporalmente"
                   >
                     <span className="icon">🔄</span>
                     <span className="item-text">
                       <strong>Reiniciar Perfil</strong>
-                      <small>Volver al onboarding inicial</small>
+                      <small>Función deshabilitada</small>
                     </span>
                   </button>
                 )}
@@ -403,21 +417,55 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
         </div>
       </div>
 
-      {/* Hero Section Compacto */}
+      {/* Hero Section Profesional con Efectos Avanzados */}
       <div className="hero-compact">
+        <div className="hero-background-effects">
+          <div className="gradient-orb orb-1"></div>
+          <div className="gradient-orb orb-2"></div>
+          <div className="gradient-orb orb-3"></div>
+        </div>
+        
         <div className="hero-content">
           <div className="hero-text">
             <div className="hero-badge">
               <span className="badge-pulse">⚡</span>
               <span>Preparación Profesional PL-300</span>
+              <div className="badge-glow"></div>
             </div>
-            <h1>Domina el <br/>PL-300</h1>
-            <p>Certificación Microsoft Power BI Data Analyst con práctica inteligente, análisis profundo y misiones especializadas</p>
             
-            <button className="cta-primary" onClick={startQuiz}>
-              <span className="rocket-icon">🚀</span>
-              <span>Comenzar Ahora</span>
-            </button>
+            <h1>
+              <span className="title-line">Domina el</span>
+              <span className="title-highlight">PL-300</span>
+            </h1>
+            
+            <p className="hero-description">
+              Certificación Microsoft Power BI Data Analyst con práctica inteligente, 
+              análisis profundo y misiones especializadas
+            </p>
+            
+            <div className="cta-container">
+              <button className="cta-primary" onClick={startQuiz}>
+                <span className="cta-shimmer"></span>
+                <span className="rocket-icon">🚀</span>
+                <span className="cta-text">Comenzar Ahora</span>
+                <span className="cta-arrow">→</span>
+              </button>
+              
+              <div className="trust-indicators">
+                <div className="trust-item">
+                  <span className="trust-icon">✓</span>
+                  <span>Contenido Oficial</span>
+                </div>
+                <div className="trust-item">
+                  <span className="trust-icon">✓</span>
+                  <span>IA Avanzada</span>
+                </div>
+                <div className="trust-item">
+                  <span className="trust-icon">✓</span>
+                  <span>Certificado</span>
+                </div>
+              </div>
+            </div>
 
             <div className="quick-actions">
               <button 
@@ -429,6 +477,7 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
                   <strong>Test Aleatorio</strong>
                   <small>Todas las categorías</small>
                 </span>
+                <div className="btn-shine"></div>
               </button>
               <button 
                 className="quick-action-btn exam-mode" 
@@ -439,6 +488,7 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
                   <strong>Modo Examen</strong>
                   <small>Nivel avanzado</small>
                 </span>
+                <div className="btn-shine"></div>
               </button>
               {userStats && userStats.quizzesTaken > 0 && (
                 <button 
@@ -450,27 +500,60 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
                     <strong>Análisis</strong>
                     <small>Ver estadísticas</small>
                   </span>
+                  <div className="btn-shine"></div>
                 </button>
               )}
             </div>
           </div>
 
-          {/* Dashboard 3D */}
+          {/* Dashboard 3D Mejorado */}
           <div className="dashboard-3d">
-            <div className="dashboard-card">
-              <div className="card-icon">📊</div>
+            <div className="dashboard-card card-primary">
+              <div className="card-glow"></div>
+              <div className="card-icon-wrapper">
+                <div className="card-icon">📊</div>
+                <div className="icon-ring"></div>
+              </div>
               <h3>Progreso</h3>
-              <div className="card-value">{userStats ? userStats.quizzesTaken : 0}</div>
+              <div className="card-value">
+                {userStats ? userStats.quizzesTaken : 0}
+                <span className="value-label">quizzes</span>
+              </div>
+              <div className="card-footer">
+                <span className="footer-badge">En progreso</span>
+              </div>
             </div>
-            <div className="dashboard-card">
-              <div className="card-icon">🎯</div>
+            
+            <div className="dashboard-card card-success">
+              <div className="card-glow"></div>
+              <div className="card-icon-wrapper">
+                <div className="card-icon">🎯</div>
+                <div className="icon-ring"></div>
+              </div>
               <h3>Precisión</h3>
-              <div className="card-value">{userStats ? `${(userStats.accuracy || 0).toFixed(0)}%` : '0%'}</div>
+              <div className="card-value">
+                {userStats ? `${(userStats.accuracy || 0).toFixed(0)}` : '0'}
+                <span className="value-unit">%</span>
+              </div>
+              <div className="card-footer">
+                <span className="footer-badge">Exactitud</span>
+              </div>
             </div>
-            <div className="dashboard-card">
-              <div className="card-icon">🏆</div>
+            
+            <div className="dashboard-card card-premium">
+              <div className="card-glow"></div>
+              <div className="card-icon-wrapper">
+                <div className="card-icon">🏆</div>
+                <div className="icon-ring"></div>
+              </div>
               <h3>Puntos</h3>
-              <div className="card-value">{userStats ? userStats.totalPoints : 0}</div>
+              <div className="card-value">
+                {userStats ? formatNumber(userStats.totalPoints) : 0}
+                <span className="value-label">pts</span>
+              </div>
+              <div className="card-footer">
+                <span className="footer-badge">Total XP</span>
+              </div>
             </div>
           </div>
         </div>
@@ -485,7 +568,9 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
             </div>
 
             <div className="stats-grid">
-              {statCards.map((card) => {
+              {statCards
+                .filter((card) => card.key === 'streak' || card.key === 'level') // Solo Racha y Nivel
+                .map((card) => {
                 const circleProgress = clampValue(card.progress, 0, 1);
                 const progressOffset = CIRCLE_CIRCUMFERENCE * (1 - circleProgress);
                 const gradientId = `gradient-${card.key}`;
@@ -707,11 +792,12 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
               <div className="question-count">{numberOfQuestions}</div>
               <input
                 type="range"
-                min="5"
-                max="46"
-                value={numberOfQuestions}
+                min={Math.min(5, availableCount)} 
+                max={Math.max(5, availableCount || 46)}
+                value={Math.min(numberOfQuestions, availableCount || 46)}
                 onChange={(e) => setNumberOfQuestions(parseInt(e.target.value))}
                 className="slider"
+                disabled={availableCount === 0}
               />
             </div>
             
@@ -727,7 +813,7 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
               </div>
               {availableCount < numberOfQuestions && availableCount > 0 && (
                 <p className="availability-note">
-                  ⚠️ Solo hay {availableCount} preguntas disponibles. Se usarán todas las disponibles.
+                  ℹ️ Ajustado a {availableCount} preguntas (todas las disponibles)
                 </p>
               )}
               {availableCount === 0 && (
@@ -735,13 +821,24 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
                   ⛔ No hay preguntas disponibles con esta configuración. Intenta cambiar el dominio o nivel.
                 </p>
               )}
+              {availableCount < 5 && availableCount > 0 && (
+                <p className="availability-note info">
+                  💡 Tip: Selecciona "Todos los Dominios" o "Todos los Niveles" para más preguntas
+                </p>
+              )}
             </div>
           </div>
 
           {/* Botón Comenzar */}
           <div className="start-button-container">
-            <button className="start-quiz-btn" onClick={startQuiz}>
-              <span>🚀 Iniciar Quiz Personalizado</span>
+            <button 
+              className="start-quiz-btn" 
+              onClick={startQuiz}
+              disabled={availableCount === 0}
+            >
+              <span>
+                {availableCount === 0 ? '⛔ Sin Preguntas Disponibles' : '🚀 Iniciar Quiz Personalizado'}
+              </span>
             </button>
           </div>
         </div>

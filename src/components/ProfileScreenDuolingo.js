@@ -1032,6 +1032,17 @@ const LevelUpCeremony = ({ levelInfo, onClose }) => {
 
 // ===== OVERVIEW TAB DUOLINGO =====
 const OverviewTabDuo = ({ stats, progress, levelInfo }) => {
+  // ✅ Validación de datos al inicio del componente
+  if (!stats || !progress) {
+    return (
+      <div className="overview-duo">
+        <div className="loading-message">
+          Cargando información del perfil...
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="overview-duo">
       {/* Quick Stats Grid */}
@@ -1098,52 +1109,246 @@ const OverviewTabDuo = ({ stats, progress, levelInfo }) => {
         </div>
       </div>
 
-      {/* Progress Insights */}
+      {/* Progress Insights - MEJORADO CON INFORMACIÓN ÚNICA */}
       <div className="section-duo">
         <h2 className="section-title-duo">
           <span className="title-icon">💡</span>
           Insights de Progreso
         </h2>
         <div className="insights-grid-duo">
+          {/* Insight 1: Dominio más dominado */}
+          <div className="insight-card">
+            <div className="insight-header">
+              <span className="insight-emoji">⭐</span>
+              <span className="insight-title">Mejor Dominio</span>
+            </div>
+            <div className="insight-value">
+              {(() => {
+                // ✅ Validación robusta de datos
+                if (!stats?.domainStats || typeof stats.domainStats !== 'object') {
+                  return 'Sin datos';
+                }
+                
+                const sortedDomains = Object.entries(stats.domainStats)
+                  .filter(([, data]) => data && typeof data === 'object' && Number(data.attempted || 0) > 0)
+                  .sort((a, b) => Number(b[1].accuracy || 0) - Number(a[1].accuracy || 0));
+                
+                if (sortedDomains.length === 0) return 'Sin datos';
+                
+                const [bestDomain] = sortedDomains[0];
+                const domainName = DOMAIN_LABELS[bestDomain] || bestDomain;
+                return domainName;
+              })()}
+            </div>
+            <div className="insight-description">
+              {(() => {
+                if (!stats?.domainStats || typeof stats.domainStats !== 'object') {
+                  return 'Comienza a practicar';
+                }
+                
+                const sortedDomains = Object.entries(stats.domainStats)
+                  .filter(([, data]) => data && typeof data === 'object' && Number(data.attempted || 0) > 0)
+                  .sort((a, b) => Number(b[1].accuracy || 0) - Number(a[1].accuracy || 0));
+                
+                if (sortedDomains.length === 0) return 'Comienza a practicar';
+                
+                const [, data] = sortedDomains[0];
+                const accuracy = Number(data.accuracy || 0);
+                const mastered = Number(data.mastered || 0);
+                return `${accuracy.toFixed(0)}% de precisión • ${mastered} dominadas`;
+              })()}
+            </div>
+          </div>
+
+          {/* Insight 2: Velocidad de aprendizaje */}
+          <div className="insight-card">
+            <div className="insight-header">
+              <span className="insight-emoji">⚡</span>
+              <span className="insight-title">Velocidad</span>
+            </div>
+            <div className="insight-value">
+              {(() => {
+                // ✅ Validación de quizzes tomados
+                const quizzesTaken = Number(stats?.quizzesTaken || 0);
+                if (quizzesTaken === 0) return 'Principiante';
+                if (quizzesTaken < 5) return '🐢 Despacio';
+                if (quizzesTaken < 10) return '🚶 Moderado';
+                if (quizzesTaken < 20) return '🏃 Rápido';
+                return '🚀 Muy Rápido';
+              })()}
+            </div>
+            <div className="insight-description">
+              {(() => {
+                const totalAttempts = Number(stats?.totalAttempts || 0);
+                const quizzesTaken = Number(stats?.quizzesTaken || 0);
+                
+                if (totalAttempts === 0 || quizzesTaken === 0) {
+                  return '0 preguntas promedio por quiz';
+                }
+                
+                const avgQuestionsPerQuiz = (totalAttempts / quizzesTaken).toFixed(1);
+                return `${avgQuestionsPerQuiz} preguntas promedio por quiz`;
+              })()}
+            </div>
+          </div>
+
+          {/* Insight 3: Eficiencia (Ratio correctas/intentos) */}
           <div className="insight-card">
             <div className="insight-header">
               <span className="insight-emoji">🎯</span>
-              <span className="insight-title">Consistencia</span>
+              <span className="insight-title">Eficiencia</span>
             </div>
             <div className="insight-value">
-              {stats.currentStreak > 0 ? 'Muy Bien!' : 'Comienza una racha'}
+              {(() => {
+                // ✅ Validación de intentos totales
+                const totalAttempts = Number(stats?.totalAttempts || 0);
+                const correctAttempts = Number(stats?.correctAttempts || 0);
+                
+                if (totalAttempts === 0) return 'Sin datos';
+                
+                const efficiency = (correctAttempts / totalAttempts) * 100;
+                if (efficiency >= 80) return '🌟 Excelente';
+                if (efficiency >= 65) return '👍 Buena';
+                if (efficiency >= 50) return '📚 Aceptable';
+                return '💪 Mejorando';
+              })()}
             </div>
             <div className="insight-description">
-              {stats.currentStreak > 0 
-                ? `Llevas ${stats.currentStreak} día${stats.currentStreak > 1 ? 's' : ''} seguidos estudiando`
-                : 'Estudia hoy para empezar tu racha'
-              }
+              {(() => {
+                const totalAttempts = Number(stats?.totalAttempts || 0);
+                const correctAttempts = Number(stats?.correctAttempts || 0);
+                
+                if (totalAttempts === 0) {
+                  return 'Comienza a responder preguntas';
+                }
+                
+                return `${correctAttempts}/${totalAttempts} respuestas correctas al primer intento`;
+              })()}
             </div>
           </div>
 
+          {/* Insight 4: Área de oportunidad */}
           <div className="insight-card">
             <div className="insight-header">
-              <span className="insight-emoji">📈</span>
-              <span className="insight-title">Tendencia</span>
+              <span className="insight-emoji">🎓</span>
+              <span className="insight-title">Siguiente Reto</span>
             </div>
             <div className="insight-value">
-              {stats.accuracyOverall >= 70 ? '⬆️ Mejorando' : stats.accuracyOverall >= 50 ? '→ Estable' : '⬇️ Necesitas practicar'}
+              {(() => {
+                // ✅ Validación robusta de dominios
+                if (!stats?.domainStats || typeof stats.domainStats !== 'object') {
+                  return 'Explora dominios';
+                }
+                
+                const sortedDomains = Object.entries(stats.domainStats)
+                  .filter(([, data]) => data && typeof data === 'object' && Number(data.attempted || 0) > 0)
+                  .sort((a, b) => Number(a[1].accuracy || 0) - Number(b[1].accuracy || 0));
+                
+                if (sortedDomains.length === 0) return 'Explora dominios';
+                
+                const [weakDomain] = sortedDomains[0];
+                const domainName = DOMAIN_LABELS[weakDomain] || weakDomain;
+                return domainName;
+              })()}
             </div>
             <div className="insight-description">
-              Tu precisión general es {stats.accuracyOverall.toFixed(1)}%
+              {(() => {
+                if (!stats?.domainStats || typeof stats.domainStats !== 'object') {
+                  return 'Comienza tu aprendizaje';
+                }
+                
+                const sortedDomains = Object.entries(stats.domainStats)
+                  .filter(([, data]) => data && typeof data === 'object' && Number(data.attempted || 0) > 0)
+                  .sort((a, b) => Number(a[1].accuracy || 0) - Number(b[1].accuracy || 0));
+                
+                if (sortedDomains.length === 0) return 'Comienza tu aprendizaje';
+                
+                const [, data] = sortedDomains[0];
+                const accuracy = Number(data.accuracy || 0);
+                const improvement = Math.max(0, 70 - accuracy);
+                return `${improvement.toFixed(0)}% de mejora potencial`;
+              })()}
             </div>
           </div>
 
+          {/* Insight 5: Preguntas dominadas */}
           <div className="insight-card">
             <div className="insight-header">
-              <span className="insight-emoji">🏆</span>
-              <span className="insight-title">Logros</span>
+              <span className="insight-emoji">�</span>
+              <span className="insight-title">Maestría</span>
             </div>
             <div className="insight-value">
-              {stats.unlockedAchievements} de {stats.totalAchievements}
+              {(() => {
+                const totalMastered = Object.values(stats.domainStats)
+                  .reduce((sum, domain) => sum + (domain.mastered || 0), 0);
+                
+                if (totalMastered === 0) return 'Ninguna aún';
+                if (totalMastered < 5) return `${totalMastered} preguntas`;
+                if (totalMastered < 15) return `${totalMastered} preguntas ⭐`;
+                return `${totalMastered} preguntas 🌟`;
+              })()}
             </div>
             <div className="insight-description">
-              {((stats.unlockedAchievements / stats.totalAchievements) * 100).toFixed(0)}% completado
+              {(() => {
+                const totalMastered = Object.values(stats.domainStats)
+                  .reduce((sum, domain) => sum + (domain.mastered || 0), 0);
+                const totalAttempted = stats.questionsAnswered || 0;
+                
+                if (totalAttempted === 0) return 'Comienza a practicar';
+                
+                const masteryRate = ((totalMastered / totalAttempted) * 100).toFixed(0);
+                return `${masteryRate}% de tus preguntas dominadas`;
+              })()}
+            </div>
+          </div>
+
+          {/* Insight 6: Tiempo de estudio estimado */}
+          <div className="insight-card">
+            <div className="insight-header">
+              <span className="insight-emoji">⏰</span>
+              <span className="insight-title">Dedicación</span>
+            </div>
+            <div className="insight-value">
+              {(() => {
+                // ✅ Validación de tiempo de estudio
+                if (!stats?.domainStats || typeof stats.domainStats !== 'object') {
+                  return 'Sin registro';
+                }
+                
+                const totalTimeMinutes = Object.values(stats.domainStats)
+                  .reduce((sum, domain) => {
+                    const timeSpent = Number((domain && domain.timeSpent) || 0);
+                    return sum + timeSpent;
+                  }, 0) / 60000;
+                
+                if (totalTimeMinutes === 0 || !Number.isFinite(totalTimeMinutes)) return 'Sin registro';
+                if (totalTimeMinutes < 10) return `${totalTimeMinutes.toFixed(0)} min`;
+                if (totalTimeMinutes < 60) return `${totalTimeMinutes.toFixed(0)} min 📚`;
+                const hours = (totalTimeMinutes / 60).toFixed(1);
+                return `${hours} horas 🔥`;
+              })()}
+            </div>
+            <div className="insight-description">
+              {(() => {
+                if (!stats?.domainStats || typeof stats.domainStats !== 'object') {
+                  return 'Comienza a estudiar';
+                }
+                
+                const totalTimeMinutes = Object.values(stats.domainStats)
+                  .reduce((sum, domain) => {
+                    const timeSpent = Number((domain && domain.timeSpent) || 0);
+                    return sum + timeSpent;
+                  }, 0) / 60000;
+                
+                const quizzesTaken = Number(stats?.quizzesTaken || 0);
+                
+                if (totalTimeMinutes === 0 || quizzesTaken === 0 || !Number.isFinite(totalTimeMinutes)) {
+                  return 'Comienza a estudiar';
+                }
+                
+                const avgTimePerQuiz = (totalTimeMinutes / quizzesTaken).toFixed(1);
+                return `${avgTimePerQuiz} min promedio por quiz`;
+              })()}
             </div>
           </div>
         </div>
@@ -1151,6 +1356,105 @@ const OverviewTabDuo = ({ stats, progress, levelInfo }) => {
     </div>
   );
 };
+
+// ===== RECOMMENDATION CARD COMPONENT (SIMPLIFIED & CLEAN) =====
+const RecommendationCard = React.memo(({ recommendation, index }) => {
+  const [isHovered, setIsHovered] = useState(false);
+  
+  const priorityColors = {
+    high: '#F44336',
+    medium: '#FF9800',
+    low: '#4CAF50',
+    varies: '#9C27B0'
+  };
+  
+  return (
+    <motion.div
+      className={`rec-card-compact priority-${recommendation.priority}`}
+      initial={{ opacity: 0, y: 30 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ delay: index * 0.05, ...springConfig }}
+      whileHover={{ scale: 1.02 }}
+      onHoverStart={() => {
+        setIsHovered(true);
+        haptic(20);
+      }}
+      onHoverEnd={() => setIsHovered(false)}
+      style={{ '--priority-color': priorityColors[recommendation.priority] }}
+    >
+      {/* Compact Header */}
+      <div className="rec-compact-header">
+        <motion.div 
+          className="rec-icon-compact"
+          animate={isHovered ? { scale: [1, 1.1, 1] } : {}}
+          transition={{ duration: 0.5 }}
+        >
+          {recommendation.icon}
+        </motion.div>
+        
+        <div className="rec-compact-content">
+          <h4 className="rec-compact-title">{recommendation.title}</h4>
+          <p className="rec-compact-description">{recommendation.description}</p>
+        </div>
+
+        <div className={`rec-priority-dot ${recommendation.priority}`}></div>
+      </div>
+
+      {/* Compact Stats Row */}
+      {(recommendation.progress !== undefined || recommendation.streak || recommendation.stats) && (
+        <div className="rec-compact-stats">
+          {recommendation.progress !== undefined && (
+            <div className="compact-stat">
+              <span className="stat-icon">📊</span>
+              <span className="stat-text">{recommendation.progress.toFixed(0)}% completado</span>
+            </div>
+          )}
+          
+          {recommendation.streak && (
+            <div className="compact-stat">
+              <span className="stat-icon">🔥</span>
+              <span className="stat-text">{recommendation.streak.current}/{recommendation.streak.target} días</span>
+            </div>
+          )}
+          
+          {recommendation.stats?.accuracy !== undefined && (
+            <div className="compact-stat">
+              <span className="stat-icon">🎯</span>
+              <span className="stat-text">{recommendation.stats.accuracy.toFixed(0)}% precisión</span>
+            </div>
+          )}
+          
+          {recommendation.estimatedTime && (
+            <div className="compact-stat">
+              <span className="stat-icon">⏱️</span>
+              <span className="stat-text">{recommendation.estimatedTime}</span>
+            </div>
+          )}
+          
+          {recommendation.xpReward && (
+            <div className="compact-stat xp-highlight">
+              <span className="stat-icon">⚡</span>
+              <span className="stat-text">+{recommendation.xpReward} XP</span>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Hover Effect */}
+      <AnimatePresence>
+        {isHovered && (
+          <motion.div
+            className="rec-compact-glow"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 0.15 }}
+            exit={{ opacity: 0 }}
+            style={{ backgroundColor: priorityColors[recommendation.priority] }}
+          />
+        )}
+      </AnimatePresence>
+    </motion.div>
+  );
+});
 
 // ===== ANALYSIS TAB DUOLINGO =====
 const AnalysisTabDuo = ({ stats, progress, selectedDomain, setSelectedDomain, showRecommendations, setShowRecommendations, animateCharts }) => {
@@ -1237,54 +1541,389 @@ const AnalysisTabDuo = ({ stats, progress, selectedDomain, setSelectedDomain, sh
       ? (stats.correctAttempts / stats.totalAttempts) * 100
       : 0;
 
+    // ===== SISTEMA AVANZADO DE RECOMENDACIONES =====
     const recommendations = [];
+    
+    // 1. Recomendaciones por debilidades (ALTA PRIORIDAD)
     if (weaknesses.length > 0) {
-      recommendations.push({
-        icon: '⚠️',
-        title: 'Reforzar áreas débiles',
-        description: `Enfócate en: ${weaknesses
-          .map(w => domainNames[w.domain] || w.domain)
-          .join(', ')}`,
-        priority: 'high',
-        action: 'Practicar ahora'
+      weaknesses.forEach((weakness) => {
+        const domainName = domainNames[weakness.domain] || weakness.domain;
+        const questionsWrong = weakness.incorrect;
+        
+        recommendations.push({
+          id: `weakness-${weakness.domain}`,
+          icon: '⚠️',
+          title: 'Reforzar área débil',
+          domain: weakness.domain,
+          description: `Tu precisión en ${domainName} es del ${weakness.accuracy.toFixed(0)}%. Has respondido ${questionsWrong} preguntas incorrectamente.`,
+          priority: 'high',
+          type: 'weakness',
+          action: 'Practicar ahora',
+          actionTarget: 'quiz',
+          actionData: { domain: weakness.domain, level: 'basic' },
+          impact: 'Mejorar este dominio puede incrementar tu precisión general en un 15%',
+          estimatedTime: '10-15 min',
+          xpReward: 150,
+          difficulty: 'medium',
+          tips: [
+            `Revisa la teoría de ${domainName} antes de practicar`,
+            'Enfócate en entender los errores, no solo en acertar',
+            'Practica en sesiones cortas pero frecuentes'
+          ],
+          progress: weakness.completion,
+          stats: {
+            attempted: weakness.attempted,
+            correct: weakness.correct,
+            accuracy: weakness.accuracy
+          }
+        });
       });
     }
+
+    // 2. Recomendaciones por racha (MEDIA/ALTA PRIORIDAD)
     if (stats.currentStreak === 0) {
       recommendations.push({
+        id: 'streak-start',
         icon: '🔥',
-        title: 'Construye una racha',
-        description: 'Estudia diariamente para mantener el impulso',
+        title: 'Construye tu racha de estudio',
+        description: 'Estudia durante 7 días consecutivos para mantener el impulso y ganar bonificaciones.',
+        priority: 'high',
+        type: 'streak',
+        action: 'Empezar racha',
+        actionTarget: 'quiz',
+        actionData: { mode: 'daily-challenge' },
+        impact: 'Las rachas de 7+ días aumentan la retención en un 40%',
+        estimatedTime: '5 min/día',
+        xpReward: 50,
+        difficulty: 'easy',
+        tips: [
+          'Establece un horario fijo para estudiar',
+          'Comienza con solo 5 minutos diarios',
+          'Activa recordatorios en tu calendario'
+        ],
+        progress: 0,
+        streak: {
+          current: stats.currentStreak,
+          target: 7,
+          longest: stats.longestStreak
+        }
+      });
+    } else if (stats.currentStreak > 0 && stats.currentStreak < 7) {
+      recommendations.push({
+        id: 'streak-maintain',
+        icon: '🔥',
+        title: `¡Mantén tu racha de ${stats.currentStreak} días!`,
+        description: `Te faltan ${7 - stats.currentStreak} días para alcanzar una racha de 7 días y desbloquear recompensas.`,
         priority: 'medium',
-        action: 'Empezar racha'
+        type: 'streak',
+        action: 'Continuar racha',
+        actionTarget: 'quiz',
+        actionData: { mode: 'daily-challenge' },
+        impact: 'Completar rachas desbloquea multiplicadores de XP',
+        estimatedTime: '5 min',
+        xpReward: 75,
+        difficulty: 'easy',
+        tips: [
+          '¡No rompas tu racha! Estudia hoy',
+          'Tu mejor racha fue de ' + stats.longestStreak + ' días',
+          'Las rachas mejoran tu disciplina y retención'
+        ],
+        progress: (stats.currentStreak / 7) * 100,
+        streak: {
+          current: stats.currentStreak,
+          target: 7,
+          longest: stats.longestStreak
+        }
+      });
+    } else if (stats.currentStreak >= 7) {
+      recommendations.push({
+        id: 'streak-extend',
+        icon: '🔥',
+        title: `¡Racha épica de ${stats.currentStreak} días!`,
+        description: '¡Increíble! Mantén esta racha para maximizar tu aprendizaje y ganar XP extra.',
+        priority: 'low',
+        type: 'streak',
+        action: 'Extender racha',
+        actionTarget: 'quiz',
+        actionData: { mode: 'daily-challenge', bonus: 'streak-multiplier' },
+        impact: 'Rachas de 7+ días otorgan bonificación de XP del 50%',
+        estimatedTime: '5 min',
+        xpReward: 100,
+        difficulty: 'easy',
+        tips: [
+          '¡Felicidades! Tu disciplina es ejemplar',
+          'Multiplica tu XP por mantener la racha',
+          'Desafíate con preguntas más difíciles'
+        ],
+        progress: 100,
+        streak: {
+          current: stats.currentStreak,
+          target: stats.currentStreak + 7,
+          longest: stats.longestStreak
+        }
       });
     }
+
+    // 3. Recomendaciones por preguntas difíciles (ALTA PRIORIDAD)
     if (strugglingQuestions > 0) {
       recommendations.push({
+        id: 'struggling-questions',
         icon: '🎯',
         title: 'Repasa preguntas difíciles',
-        description: `Tienes ${strugglingQuestions} preguntas que necesitan más práctica`,
+        description: `Tienes ${strugglingQuestions} preguntas con precisión menor al 50%. Repasarlas mejorará tu confianza.`,
         priority: 'high',
-        action: 'Revisar'
+        type: 'review',
+        action: 'Revisar ahora',
+        actionTarget: 'review',
+        actionData: { type: 'struggling', count: strugglingQuestions },
+        impact: 'Dominar estas preguntas puede mejorar tu precisión en un 20%',
+        estimatedTime: `${Math.ceil(strugglingQuestions * 1.5)} min`,
+        xpReward: strugglingQuestions * 10,
+        difficulty: 'hard',
+        tips: [
+          'Lee las explicaciones completas de cada pregunta',
+          'Identifica patrones en tus errores',
+          'Practica preguntas similares después de entender'
+        ],
+        progress: 0,
+        stats: {
+          totalQuestions: strugglingQuestions,
+          avgAccuracy: 30
+        }
       });
     }
+
+    // 4. Recomendaciones por precisión general (ALTA PRIORIDAD)
     if (stats.accuracyOverall < 70) {
       recommendations.push({
+        id: 'accuracy-low',
         icon: '📚',
-        title: 'Revisa conceptos base',
-        description: 'Repasa la guía de estudio antes de practicar de nuevo',
+        title: 'Refuerza tus fundamentos',
+        description: `Tu precisión general es del ${stats.accuracyOverall.toFixed(0)}%. Revisar la guía de estudio te ayudará a mejorar.`,
         priority: 'high',
-        action: 'Ver guía'
+        type: 'study',
+        action: 'Ver guía',
+        actionTarget: 'guide',
+        actionData: { section: 'fundamentals' },
+        impact: 'Estudiar la teoría puede aumentar tu precisión en un 25%',
+        estimatedTime: '20-30 min',
+        xpReward: 200,
+        difficulty: 'medium',
+        tips: [
+          'Lee la guía completa antes de practicar',
+          'Toma notas de conceptos clave',
+          'Haz resúmenes después de cada sección'
+        ],
+        progress: 0,
+        stats: {
+          currentAccuracy: stats.accuracyOverall,
+          targetAccuracy: 70
+        }
       });
     }
+
+    // 5. Recomendaciones por dominio sin práctica reciente
+    domainAnalysis.forEach((domain) => {
+      if (domain.lastAttempt) {
+        const daysSinceLastAttempt = Math.floor(
+          (Date.now() - new Date(domain.lastAttempt).getTime()) / (1000 * 60 * 60 * 24)
+        );
+        
+        if (daysSinceLastAttempt >= 7 && domain.attempted > 0) {
+          recommendations.push({
+            id: `stale-${domain.domain}`,
+            icon: '⏰',
+            title: 'Refresca tu memoria',
+            domain: domain.domain,
+            description: `No has practicado ${domainNames[domain.domain] || domain.domain} en ${daysSinceLastAttempt} días. La memoria se debilita con el tiempo.`,
+            priority: 'medium',
+            type: 'refresh',
+            action: 'Refrescar',
+            actionTarget: 'quiz',
+            actionData: { domain: domain.domain, level: 'review' },
+            impact: 'Repasar cada 7 días mejora la retención a largo plazo',
+            estimatedTime: '10 min',
+            xpReward: 100,
+            difficulty: 'easy',
+            tips: [
+              'La curva del olvido comienza después de 7 días',
+              'Un repaso rápido puede restaurar tu conocimiento',
+              'Practica regularmente para mantener fresco'
+            ],
+            progress: Math.max(0, 100 - (daysSinceLastAttempt * 5)),
+            stats: {
+              daysSinceLastAttempt,
+              previousAccuracy: domain.accuracy
+            }
+          });
+        }
+      }
+    });
+
+    // 6. Recomendaciones por cobertura incompleta
+    domainAnalysis.forEach((domain) => {
+      if (domain.completion < 50 && domain.completion > 0) {
+        recommendations.push({
+          id: `incomplete-${domain.domain}`,
+          icon: '📊',
+          title: 'Completa tu cobertura',
+          domain: domain.domain,
+          description: `Has cubierto solo el ${domain.completion.toFixed(0)}% de ${domainNames[domain.domain] || domain.domain}. Completa más preguntas para dominar.`,
+          priority: 'medium',
+          type: 'coverage',
+          action: 'Explorar más',
+          actionTarget: 'quiz',
+          actionData: { domain: domain.domain, level: 'unexplored' },
+          impact: 'Cubrir el 100% de un dominio te acerca al dominio completo',
+          estimatedTime: '15-20 min',
+          xpReward: 175,
+          difficulty: 'medium',
+          tips: [
+            'Explora nuevas preguntas para ampliar tu conocimiento',
+            'La variedad mejora la comprensión general',
+            'No te limites a las preguntas que ya conoces'
+          ],
+          progress: domain.completion,
+          stats: {
+            questionsAnswered: domain.attempted,
+            totalQuestions: domain.totalQuestions || DOMAIN_TOTAL_QUESTIONS[domain.domain] || 25,
+            completion: domain.completion
+          }
+        });
+      }
+    });
+
+    // 7. Recomendaciones por nivel de confianza bajo
+    domainAnalysis.forEach((domain) => {
+      if (domain.avgConfidence !== null && domain.avgConfidence < CONFIDENCE_LEVELS.MEDIUM) {
+        recommendations.push({
+          id: `confidence-${domain.domain}`,
+          icon: '💪',
+          title: 'Aumenta tu confianza',
+          domain: domain.domain,
+          description: `Tu confianza en ${domainNames[domain.domain] || domain.domain} es ${formatConfidence(domain.avgConfidence)}. Practica más para sentirte seguro.`,
+          priority: 'medium',
+          type: 'confidence',
+          action: 'Practicar',
+          actionTarget: 'quiz',
+          actionData: { domain: domain.domain, level: 'confidence-builder' },
+          impact: 'Mayor confianza reduce la ansiedad en el examen real',
+          estimatedTime: '15 min',
+          xpReward: 125,
+          difficulty: 'medium',
+          tips: [
+            'La práctica repetida construye confianza',
+            'Celebra cada pequeño progreso',
+            'Visualiza el éxito antes de responder'
+          ],
+          progress: (domain.avgConfidence / CONFIDENCE_LEVELS.VERY_HIGH) * 100,
+          stats: {
+            currentConfidence: formatConfidence(domain.avgConfidence),
+            targetConfidence: formatConfidence(CONFIDENCE_LEVELS.HIGH)
+          }
+        });
+      }
+    });
+
+    // 8. Recomendaciones por fortalezas (BAJA PRIORIDAD - Motivacional)
     if (strengths.length > 0 && weaknesses.length === 0) {
+      const topStrength = strengths[0];
       recommendations.push({
+        id: 'excellence',
         icon: '🌟',
-        title: '¡Vas excelente!',
-        description: 'Mantén el ritmo y desafíate con preguntas más difíciles',
+        title: '¡Rendimiento excelente!',
+        description: `Destacas en ${domainNames[topStrength.domain] || topStrength.domain} con ${topStrength.accuracy.toFixed(0)}% de precisión. ¡Mantén el impulso!`,
         priority: 'low',
-        action: 'Continuar'
+        type: 'motivation',
+        action: 'Desafío avanzado',
+        actionTarget: 'quiz',
+        actionData: { domain: topStrength.domain, level: 'advanced', difficulty: 'hard' },
+        impact: 'Desafíate con preguntas avanzadas para alcanzar la maestría',
+        estimatedTime: '10 min',
+        xpReward: 250,
+        difficulty: 'hard',
+        tips: [
+          '¡Excelente trabajo! Sigue así',
+          'Prueba preguntas más difíciles',
+          'Enseña a otros para reforzar tu conocimiento'
+        ],
+        progress: 100,
+        stats: {
+          accuracy: topStrength.accuracy,
+          mastery: topStrength.mastery
+        }
       });
     }
+
+    // 9. Recomendaciones por logros desbloqueables
+    const totalAchievements = Object.keys(ACHIEVEMENT_TYPES).length;
+    const lockedAchievements = totalAchievements - stats.unlockedAchievements;
+    if (lockedAchievements > 0 && lockedAchievements <= 5) {
+      recommendations.push({
+        id: 'achievements',
+        icon: '🏆',
+        title: 'Desbloquea más logros',
+        description: `Te faltan ${lockedAchievements} logros por desbloquear. ¡Estás cerca de completarlos todos!`,
+        priority: 'low',
+        type: 'achievements',
+        action: 'Ver logros',
+        actionTarget: 'achievements',
+        actionData: {},
+        impact: 'Completar logros te motiva y marca tu progreso',
+        estimatedTime: 'Variable',
+        xpReward: 300,
+        difficulty: 'varies',
+        tips: [
+          'Revisa qué logros te faltan',
+          'Algunos logros se desbloquean con el tiempo',
+          'Los logros dan grandes recompensas de XP'
+        ],
+        progress: (stats.unlockedAchievements / totalAchievements) * 100,
+        stats: {
+          unlocked: stats.unlockedAchievements,
+          total: totalAchievements,
+          remaining: lockedAchievements
+        }
+      });
+    }
+
+    // 10. Recomendaciones por tiempo de estudio
+    const totalTimeMs = Object.values(domainStats).reduce((sum, d) => sum + (d?.timeSpent ?? 0), 0);
+    const totalTimeMinutes = Math.floor(totalTimeMs / 60000);
+    if (totalTimeMinutes < 30 && stats.quizzesTaken > 0) {
+      recommendations.push({
+        id: 'study-time',
+        icon: '⏱️',
+        title: 'Aumenta tu tiempo de estudio',
+        description: `Has estudiado ${totalTimeMinutes} minutos en total. Dedica más tiempo para mejorar tu preparación.`,
+        priority: 'medium',
+        type: 'study-time',
+        action: 'Estudiar más',
+        actionTarget: 'quiz',
+        actionData: { mode: 'extended-session' },
+        impact: 'Estudiar 30+ minutos por sesión mejora la retención',
+        estimatedTime: '30 min',
+        xpReward: 200,
+        difficulty: 'medium',
+        tips: [
+          'Las sesiones largas mejoran el aprendizaje profundo',
+          'Toma descansos cada 25 minutos (Pomodoro)',
+          'Establece metas de tiempo de estudio semanal'
+        ],
+        progress: (totalTimeMinutes / 60) * 100,
+        stats: {
+          totalMinutes: totalTimeMinutes,
+          targetMinutes: 60
+        }
+      });
+    }
+
+    // Ordenar recomendaciones por prioridad
+    const priorityOrder = { high: 0, medium: 1, low: 2, varies: 3 };
+    recommendations.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+
+    // Limitar a las 8 recomendaciones más relevantes
+    const topRecommendations = recommendations.slice(0, 8);
 
     return {
       strengths,
@@ -1293,7 +1932,7 @@ const AnalysisTabDuo = ({ stats, progress, selectedDomain, setSelectedDomain, sh
       masteredQuestions,
       strugglingQuestions,
       learningRate,
-      recommendations,
+      recommendations: topRecommendations,
       domainAnalysis
     };
   }, [stats, progress, domainNames]);
@@ -1405,43 +2044,43 @@ const AnalysisTabDuo = ({ stats, progress, selectedDomain, setSelectedDomain, sh
         </div>
       </div>
 
-      {/* Recommendations - Interactive */}
+      {/* Recommendations - Simplified & Clean */}
       <div className="section-duo">
         <div className="section-header-interactive">
           <h2 className="section-title-duo">
             <span className="title-icon">💡</span>
             Recomendaciones Personalizadas
+            <span className="rec-count-badge">{analysis.recommendations.length}</span>
           </h2>
           <button 
             className="toggle-btn-duo"
-            onClick={() => setShowRecommendations(!showRecommendations)}
+            onClick={() => {
+              setShowRecommendations(!showRecommendations);
+              haptic(30);
+            }}
           >
             {showRecommendations ? '▼ Ocultar' : '▶ Mostrar'}
           </button>
         </div>
-        {showRecommendations && (
-          <div className="recommendations-mega-grid">
-            {analysis.recommendations.map((rec, idx) => (
-              <div 
-                key={idx} 
-                className={`rec-mega-card priority-${rec.priority}`}
-                style={{ animationDelay: `${idx * 0.1}s` }}
-              >
-                <div className="rec-icon-large">{rec.icon}</div>
-                <div className="rec-content-mega">
-                  <h4 className="rec-title-mega">{rec.title}</h4>
-                  <p className="rec-description-mega">{rec.description}</p>
-                  <button className={`rec-action-btn priority-${rec.priority}`}>
-                    {rec.action} →
-                  </button>
-                </div>
-                <div className={`rec-badge ${rec.priority}`}>
-                  {rec.priority === 'high' ? 'ALTA' : rec.priority === 'medium' ? 'MEDIA' : 'BAJA'}
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
+        <AnimatePresence>
+          {showRecommendations && (
+            <motion.div 
+              className="recommendations-compact-grid"
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              exit={{ opacity: 0, height: 0 }}
+              transition={{ duration: 0.3 }}
+            >
+              {analysis.recommendations.map((rec, idx) => (
+                <RecommendationCard 
+                  key={rec.id} 
+                  recommendation={rec} 
+                  index={idx}
+                />
+              ))}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
 
       {/* Domain Comparison - Interactive Chart */}

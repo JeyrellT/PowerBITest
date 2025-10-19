@@ -2,7 +2,7 @@ export const examGuideContent = {
   title: 'Guia completa del examen PL-300',
   lastUpdated: 'Documentacion Microsoft Learn (21 abril 2025)',
   description:
-    'Resumen ejecutivo para disenar bancos diagnosticos y rutas de estudio alineadas con el examen Microsoft Power BI Data Analyst (PL-300).',
+    'Sistema inteligente de aprendizaje adaptativo para dominar el examen Microsoft Power BI Data Analyst (PL-300) con diagnosticos personalizados, seguimiento de progreso y recomendaciones basadas en IA.',
   keyStats: [
     { label: 'Duracion del examen', value: '100 minutos' },
     { label: 'Numero de preguntas', value: '50-60 (segun dificultad)' },
@@ -32,6 +32,86 @@ export const examGuideContent = {
     }
   ],
   sections: [
+    {
+      id: 'mecanica-app',
+      title: '📱 Cómo funciona esta aplicación',
+      intro:
+        'Plataforma de aprendizaje inteligente que combina gamificación, análisis adaptativo y seguimiento personalizado para maximizar tu preparación para el PL-300.',
+      highlights: [
+        'Sistema de perfil dinámico que evoluciona con cada pregunta respondida',
+        'Clasificación automática de preguntas por dificultad, dominio y formato',
+        'Motor de recomendaciones basado en tu desempeño y patrones de aprendizaje',
+        'Análisis detallado de fortalezas, debilidades y áreas de oportunidad'
+      ],
+      subSections: [
+        {
+          title: '🎯 Mecánica del sistema de aprendizaje',
+          items: [
+            '**Evaluación diagnóstica inicial**: 20 preguntas estratégicas para mapear tu nivel base en los 4 dominios del examen',
+            '**Sistema de XP y niveles**: Gana experiencia resolviendo preguntas, mantén rachas y desbloquea logros (Novato → Aprendiz → Estudiante → Experto → Maestro → Leyenda)',
+            '**Preguntas adaptativas**: El sistema ajusta automáticamente la dificultad según tu desempeño en cada dominio',
+            '**Tracking granular**: Cada pregunta registra intentos, tiempo promedio, confianza y patrón de respuesta (correcta al 1er intento, 2do, 3er intento o incorrecta)',
+            '**Clasificación inteligente**: Las preguntas se etiquetan por dominio (Preparar, Modelar, Visualizar, Administrar), nivel (Principiante, Intermedio, Avanzado) y formato (Caso de estudio, Drag-drop, DAX, etc.)',
+            '**Modo de práctica libre**: Selecciona dominios específicos o deja que el sistema elija las preguntas más relevantes para ti'
+          ]
+        },
+        {
+          title: '👤 Tu perfil de aprendizaje',
+          items: [
+            '**Panel de estadísticas en tiempo real**: Precisión general, preguntas respondidas, XP total, racha actual vs. máxima',
+            '**Mapa de calor por dominio**: Visualización clara de tu dominio en cada área (Preparar Datos, Modelar Datos, Visualizar, Administrar)',
+            '**Historial completo**: Registro de todos tus quizzes con fecha, precisión, tiempo invertido y XP ganado',
+            '**Análisis de confianza**: Medición de tu nivel de confianza en cada dominio (Muy baja, Baja, Media, Alta, Muy alta)',
+            '**Preguntas dominadas**: Identifica qué preguntas has masterizado (3+ respuestas correctas consecutivas) vs. las que necesitas reforzar',
+            '**Insights personalizados**: 6 tipos de análisis automático (Mejor dominio, Velocidad de aprendizaje, Eficiencia, Siguiente reto, Maestría, Dedicación)'
+          ]
+        },
+        {
+          title: '🤖 Motor de recomendaciones inteligente',
+          items: [
+            '**Análisis predictivo**: El sistema detecta patrones en tus respuestas y predice áreas de riesgo antes del examen',
+            '**Recomendaciones priorizadas**: Alta prioridad (debilidades críticas), Media (rachas y práctica regular), Baja (refinamiento y optimización)',
+            '**Rutas de estudio personalizadas**: Sugerencias específicas basadas en tu desempeño (ej: "Practica 10 preguntas de DAX avanzado", "Refuerza RLS dinámico")',
+            '**Estimación de tiempo y XP**: Cada recomendación incluye tiempo estimado de práctica y recompensa de experiencia',
+            '**Recordatorios adaptativos**: Si no practicas un dominio por 7+ días, el sistema te alerta automáticamente',
+            '**Simulación de examen**: Genera mock exams de 55 preguntas con la distribución oficial del PL-300'
+          ]
+        },
+        {
+          title: '📊 Sistema de clasificación de preguntas',
+          items: [
+            '**Por dominio oficial**: Preparar datos (25-30%), Modelar datos (30-35%), Visualizar y analizar (25-30%), Administrar y asegurar (15-20%)',
+            '**Por nivel de dificultad**: Principiante (fundamentos, interfaz), Intermedio (transformaciones multi-paso, CALCULATE), Avanzado (modelos complejos, iteradores DAX, RLS dinámico)',
+            '**Por formato de pregunta**: Opción única, Selección múltiple, Caso de estudio (bloqueado), Drag-and-drop, Completar fórmula DAX/M, Hotspot, Yes/No por afirmación',
+            '**Por concepto crítico**: Power Query, Modelado estrella, DAX contextos, Visuales AI, RLS, Gateways, Workspace roles',
+            '**Metadatos enriquecidos**: Cada pregunta incluye explicación detallada, referencias a Microsoft Learn, trampas comunes y tips de resolución',
+            '**Estado de progreso**: Sin intentar, En progreso (1-2 intentos incorrectos), Dominada (3+ correctas consecutivas), Retirada (ya masterizada)'
+          ]
+        },
+        {
+          title: '🎨 Experiencia visual adaptativa',
+          items: [
+            '**Temas claro y oscuro**: Cambia entre modo día y noche con un clic, optimizado para largas sesiones de estudio',
+            '**Colores de acento personalizables**: Azul, Púrpura, Verde, Rosa - elige el que mejor se adapte a tu estilo',
+            '**Animaciones inteligentes**: Transiciones suaves, efectos de confeti en logros, partículas al subir de nivel',
+            '**Diseño responsivo**: Experiencia fluida en desktop, tablet y móvil (adapta layout según tamaño de pantalla)',
+            '**Feedback háptico**: Vibraciones sutiles en interacciones clave (solo dispositivos compatibles)',
+            '**Accesibilidad**: Soporte para lectores de pantalla, navegación por teclado, respeto a preferencias de movimiento reducido'
+          ]
+        },
+        {
+          title: '🔄 Ciclo de estudio recomendado',
+          items: [
+            '**Fase 1: Diagnóstico (Día 1)**: Completa la evaluación inicial de 20 preguntas para establecer tu línea base',
+            '**Fase 2: Práctica dirigida (Semanas 1-8)**: Sigue las recomendaciones del sistema, enfócate en tus dominios más débiles primero',
+            '**Fase 3: Consolidación (Semanas 9-10)**: Practica preguntas avanzadas en todos los dominios, mantén racha de 7+ días',
+            '**Fase 4: Simulación (Semanas 11-12)**: Completa 3-5 mock exams de 55 preguntas en condiciones reales (100 minutos)',
+            '**Fase 5: Repaso final (Última semana)**: Revisa preguntas que aún están "En progreso", repasa explicaciones de preguntas dominadas',
+            '**Objetivo**: Alcanzar 75%+ de precisión general y dominar 80%+ de las preguntas intentadas antes del examen oficial'
+          ]
+        }
+      ]
+    },
     {
       id: 'estructura-oficial',
       title: '1. Estructura oficial del examen',

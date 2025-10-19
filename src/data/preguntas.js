@@ -2702,6 +2702,63 @@ function shuffleArray(array) {
 }
 
 /**
+ * 🆕 Mezcla ponderada según peso de cada pregunta
+ * Preguntas con mayor peso tienen más probabilidad de aparecer
+ */
+function weightedShuffle(questions, targetCount) {
+  if (questions.length === 0) return [];
+  
+  // Crear pool ponderado: duplicar preguntas según su peso
+  const weighted = [];
+  
+  questions.forEach(q => {
+    const weight = q.weight || 1.0;
+    // Convertir peso a número de copias (1.5 → 15 copias, 0.2 → 2 copias)
+    const copies = Math.max(1, Math.ceil(weight * 10));
+    
+    for (let i = 0; i < copies; i++) {
+      weighted.push(q);
+    }
+  });
+  
+  // Mezclar el pool ponderado
+  const shuffled = shuffleArray(weighted);
+  
+  // Deduplicar: tomar la primera ocurrencia de cada pregunta única
+  const unique = [];
+  const seen = new Set();
+  
+  for (const q of shuffled) {
+    if (!seen.has(q.id)) {
+      // Remover la propiedad weight del resultado final
+      const cleanQuestion = { ...q };
+      delete cleanQuestion.weight;
+      unique.push(cleanQuestion);
+      seen.add(q.id);
+      
+      if (unique.length >= targetCount) break;
+    }
+  }
+  
+  return unique;
+}
+
+/**
+ * 🆕 Cuenta preguntas disponibles según filtros (sin mezclar ni devolver)
+ * Útil para validar disponibilidad antes de crear el quiz
+ * 
+ * @param {string|null} dominio - Dominio específico o null para todos
+ * @param {string|null} nivel - Nivel específico o null para todos
+ * @param {Object} options - Opciones de filtrado (mismo que getFilteredQuestions)
+ * @returns {number} Cantidad de preguntas disponibles
+ */
+export function getAvailableQuestionsCount(dominio = null, nivel = null, options = {}) {
+  // Llamar a getFilteredQuestions sin límite de cantidad para obtener todas disponibles
+  const availableQuestions = getFilteredQuestions(dominio, nivel, null, [], options);
+  return availableQuestions.length;
+}
+
+/**
  * Obtiene preguntas filtradas por dominio, nivel y cantidad
  * ✅ MEJORADO: Sistema de exclusión inteligente basado en questionTracking
  * 
@@ -2760,21 +2817,72 @@ export function getFilteredQuestions(dominio = null, nivel = null, cantidad = nu
     todasLasPreguntas = todasLasPreguntas.filter(p => includeSpecific.includes(p.id));
     console.log('✅ Preguntas filtradas:', todasLasPreguntas.length, 'de', includeSpecific.length, 'solicitadas');
   }
-  // Modo EXCLUIR DOMINADAS: Excluir solo las que están muy bien dominadas
+  // 🆕 Modo PONDERACIÓN CON REPETICIÓN ESPACIADA: Incluir todas pero con diferentes probabilidades
   else if (excludeMasteredOnly) {
-    // Solo excluir preguntas DOMINADAS (mastered/retired)
-    todasLasPreguntas = todasLasPreguntas.filter(p => {
+    const now = new Date();
+    
+    // Aplicar ponderación según estado y fecha de revisión
+    todasLasPreguntas = todasLasPreguntas.map(p => {
       const tracking = questionTracking[p.id];
-      if (!tracking) return true; // No respondida, incluir
       
-      // Excluir solo si está dominada (3+ correctas consecutivas y 80%+ accuracy)
-      const accuracy = tracking.totalAttempts > 0 
-        ? (tracking.correctAttempts / tracking.totalAttempts) * 100 
-        : 0;
-      const isDominated = tracking.consecutiveCorrect >= 3 && accuracy >= 80;
+      // Sin tracking → peso normal
+      if (!tracking || tracking.totalAttempts === 0) {
+        return { ...p, weight: 1.0 };
+      }
       
-      return !isDominated; // Incluir si NO está dominada
+      let weight = 1.0;
+      
+      // Verificar si necesita revisión (basado en nextReviewDate)
+      const needsReview = tracking.nextReviewDate 
+        ? new Date(tracking.nextReviewDate) <= now 
+        : true; // Si no tiene fecha, siempre disponible
+      
+      // ANTES de la fecha de revisión (aún no toca)
+      if (!needsReview) {
+        if (tracking.status === 'retired') {
+          weight = 0.0; // Excluir totalmente
+        } else if (tracking.status === 'mastered') {
+          weight = 0.05; // 5% probabilidad (muy raro)
+        } else {
+          weight = 0.5; // 50% probabilidad reducida
+        }
+      } 
+      // DESPUÉS de la fecha de revisión (toca revisar)
+      else {
+        if (tracking.status === 'retired') {
+          weight = 0.20; // 20% (revisión espaciada larga)
+        } else if (tracking.status === 'mastered') {
+          weight = 0.40; // 40% (revisión espaciada)
+        } else if (tracking.status === 'reviewing') {
+          weight = 0.80; // 80% (en revisión)
+        } else if (tracking.status === 'learning') {
+          weight = 1.0; // 100% (aprendiendo)
+        } else {
+          weight = 1.0; // Otros casos
+        }
+        
+        // Bonus por debilidad (2+ incorrectas consecutivas)
+        if (tracking.consecutiveIncorrect >= 2) {
+          weight = 1.5; // 150% (prioridad máxima)
+        }
+      }
+      
+      return { ...p, weight };
     });
+    
+    // Filtrar las de peso 0 (totalmente excluidas)
+    todasLasPreguntas = todasLasPreguntas.filter(p => (p.weight || 0) > 0);
+    
+    // Log para debugging
+    const weightDistribution = {
+      retired: todasLasPreguntas.filter(q => q.weight === 0.20).length,
+      mastered: todasLasPreguntas.filter(q => q.weight === 0.40).length,
+      reviewing: todasLasPreguntas.filter(q => q.weight === 0.80).length,
+      learning: todasLasPreguntas.filter(q => q.weight === 1.0).length,
+      weak: todasLasPreguntas.filter(q => q.weight === 1.5).length,
+      notTracked: todasLasPreguntas.filter(q => !questionTracking[q.id]).length
+    };
+    console.log('📊 Distribución de pesos:', weightDistribution);
   }
   // Modo LEGACY: Excluir lista específica
   else if (preguntasExcluidas && preguntasExcluidas.length > 0) {
@@ -2788,51 +2896,22 @@ export function getFilteredQuestions(dominio = null, nivel = null, cantidad = nu
     nivelBloom: MAPEO_BLOOM[pregunta.id] || 'recordar'
   }));
   
-  // ✅ FIX 3: Priorización por rendimiento (opcional)
-  let preguntasParaSortear = preguntasEnriquecidas;
+  // 🆕 Si hay ponderación (weight), usar weightedShuffle
+  const hasWeights = preguntasEnriquecidas.some(p => p.weight !== undefined);
   
-  if (options.prioritizeWeak && Object.keys(questionTracking).length > 0) {
-    // Separar en categorías
-    const weak = []; // < 50% accuracy
-    const medium = []; // 50-80% accuracy
-    const strong = []; // > 80% accuracy
-    const unanswered = []; // Sin responder
+  let preguntasMezcladas;
+  if (hasWeights) {
+    // Usar mezcla ponderada
+    const targetCount = cantidad && cantidad > 0 ? cantidad : preguntasEnriquecidas.length;
+    preguntasMezcladas = weightedShuffle(preguntasEnriquecidas, targetCount);
+  } else {
+    // Usar mezcla normal
+    preguntasMezcladas = shuffleArray(preguntasEnriquecidas);
     
-    preguntasEnriquecidas.forEach(p => {
-      const tracking = questionTracking[p.id];
-      if (!tracking || tracking.totalAttempts === 0) {
-        unanswered.push(p);
-      } else {
-        const accuracy = (tracking.correctAttempts / tracking.totalAttempts) * 100;
-        if (accuracy < 50) {
-          weak.push(p);
-        } else if (accuracy < 80) {
-          medium.push(p);
-        } else {
-          strong.push(p);
-        }
-      }
-    });
-    
-    // Prioridad: débiles (50%), sin responder (30%), medias (15%), fuertes (5%)
-    const weakCount = Math.ceil(preguntasEnriquecidas.length * 0.50);
-    const unansCount = Math.ceil(preguntasEnriquecidas.length * 0.30);
-    const medCount = Math.ceil(preguntasEnriquecidas.length * 0.15);
-    
-    preguntasParaSortear = [
-      ...shuffleArray(weak).slice(0, weakCount),
-      ...shuffleArray(unanswered).slice(0, unansCount),
-      ...shuffleArray(medium).slice(0, medCount),
-      ...shuffleArray(strong)
-    ];
-  }
-  
-  // ✅ FIX 1 APLICADO: Usar Fisher-Yates shuffle en lugar de sort()
-  const preguntasMezcladas = shuffleArray(preguntasParaSortear);
-  
-  // Si se especifica cantidad, devolver solo esa cantidad
-  if (cantidad && cantidad > 0) {
-    return preguntasMezcladas.slice(0, cantidad);
+    // Si se especifica cantidad, devolver solo esa cantidad
+    if (cantidad && cantidad > 0) {
+      preguntasMezcladas = preguntasMezcladas.slice(0, cantidad);
+    }
   }
   
   return preguntasMezcladas;

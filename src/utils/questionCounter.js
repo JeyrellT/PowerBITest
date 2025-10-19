@@ -149,6 +149,35 @@ export class QuestionCounter {
   }
 
   /**
+   * ✅ NUEVO: Obtiene el total de preguntas por dominio específico
+   * Útil para calcular cobertura correctamente
+   * @param {string} domain - Dominio específico
+   * @returns {number} - Total de preguntas en ese dominio
+   */
+  static getTotalByDomain(domain) {
+    if (!domain || domain === 'all' || domain === 'todos') {
+      return this.getBankSummary().total;
+    }
+    
+    const summary = this.getBankSummary();
+    return summary.byDomain[domain] || 0;
+  }
+
+  /**
+   * ✅ NUEVO: Obtiene el total de preguntas por nivel específico
+   * @param {string} level - Nivel específico
+   * @returns {number} - Total de preguntas en ese nivel
+   */
+  static getTotalByLevel(level) {
+    if (!level || level === 'all' || level === 'todos') {
+      return this.getBankSummary().total;
+    }
+    
+    const summary = this.getBankSummary();
+    return summary.byLevel[level] || 0;
+  }
+
+  /**
    * Formatea números con separadores de miles
    */
   static formatNumber(num) {

@@ -2,6 +2,21 @@ import React, { useState } from 'react';
 import '../styles/ExamGuideScreen.css';
 import { examGuideContent } from '../data/examGuideContent';
 
+// Helper para renderizar texto con formato Markdown básico (negritas **)
+const renderTextWithBold = (text) => {
+  if (!text || typeof text !== 'string') return text;
+  
+  const parts = text.split(/(\*\*.*?\*\*)/g);
+  
+  return parts.map((part, index) => {
+    if (part.startsWith('**') && part.endsWith('**')) {
+      const boldText = part.slice(2, -2);
+      return <strong key={index}>{boldText}</strong>;
+    }
+    return <span key={index}>{part}</span>;
+  });
+};
+
 const ExamGuideScreen = ({ onNavigate }) => {
   const [openSectionId, setOpenSectionId] = useState(
     examGuideContent.sections[0]?.id || null
@@ -95,7 +110,7 @@ const ExamGuideScreen = ({ onNavigate }) => {
                             <h3>{sub.title}</h3>
                             <ul>
                               {sub.items.map((item, index) => (
-                                <li key={index}>{item}</li>
+                                <li key={index}>{renderTextWithBold(item)}</li>
                               ))}
                             </ul>
                           </div>

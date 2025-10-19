@@ -12,6 +12,7 @@ class TelemetryService {
     this.queue = [];
     this.sessionId = this.generateSessionId();
     this.sessionStart = new Date();
+    this.recentEvents = new Set(); // 🆕 Para detectar duplicados
     this.loadQueue();
     this.startAutoFlush();
   }
@@ -55,6 +56,24 @@ class TelemetryService {
   }
 
   emit(eventName, properties = {}) {
+    // 🆕 PREVENIR EVENTOS DUPLICADOS
+    const eventSignature = `${eventName}_${JSON.stringify(properties)}`;
+    
+    if (this.recentEvents.has(eventSignature)) {
+      if (process.env.NODE_ENV === 'development') {
+        console.warn(`⚠️ [Telemetry] Evento duplicado ignorado: ${eventName}`);
+      }
+      return null; // No emitir el evento duplicado
+    }
+    
+    // Agregar a set de recientes
+    this.recentEvents.add(eventSignature);
+    
+    // Limpiar después de 2 segundos
+    setTimeout(() => {
+      this.recentEvents.delete(eventSignature);
+    }, 2000);
+    
     const event = {
       eventName,
       properties: {

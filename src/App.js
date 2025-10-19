@@ -8,11 +8,13 @@ import QuizScreen from './components/QuizScreen';
 import ResultsScreen from './components/ResultsScreen';
 import AnalysisScreen from './components/AnalysisScreen';
 import ExamGuideScreen from './components/ExamGuideScreen';
-import CxCApp from './CxCApp';
+import UnderConstructionScreen from './components/UnderConstructionScreen';
+import DonationPaywall from './components/DonationPaywall';
 import { ThemeProvider } from './contexts/ThemeContext';
 import { CxCProgressProvider } from './contexts/CxCProgressContext';
+import { PaywallProvider, usePaywall } from './contexts/PaywallContext';
 
-function App() {
+function AppContent() {
   const [currentScreen, setCurrentScreen] = useState('home');
   const [quizConfig, setQuizConfig] = useState({
     domain: 'all',
@@ -20,6 +22,9 @@ function App() {
     numberOfQuestions: 20
   });
   const [quizResults, setQuizResults] = useState(null);
+  
+  // Hook del paywall desde el contexto
+  const { shouldShowPaywall, unlockApp } = usePaywall();
 
   const handleOnboardingComplete = (profile) => {
     // El perfil ahora se maneja globalmente por el contexto
@@ -102,8 +107,16 @@ function App() {
         );
       case 'cxc':
         return (
-          <CxCApp
-            onExit={() => setCurrentScreen('home')}
+          <UnderConstructionScreen
+            onNavigate={navigateToScreen}
+            mode="cxc"
+          />
+        );
+      case 'diagnostico':
+        return (
+          <UnderConstructionScreen
+            onNavigate={navigateToScreen}
+            mode="diagnostico"
           />
         );
       default:
@@ -117,11 +130,24 @@ function App() {
   };
 
   return (
+    <div className="App">
+      {renderScreen()}
+      
+      {/* Paywall Modal - Se muestra cuando se alcanza el límite */}
+      {shouldShowPaywall && (
+        <DonationPaywall onUnlock={unlockApp} />
+      )}
+    </div>
+  );
+}
+
+function App() {
+  return (
     <ThemeProvider>
       <CxCProgressProvider>
-        <div className="App">
-          {renderScreen()}
-        </div>
+        <PaywallProvider>
+          <AppContent />
+        </PaywallProvider>
       </CxCProgressProvider>
     </ThemeProvider>
   );

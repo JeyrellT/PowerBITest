@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import '../styles/QuizScreen.css';
 import { getFilteredQuestions } from '../data/preguntas';
 import { useCxCProgress } from '../contexts/CxCProgressContext';
+import { usePaywall } from '../contexts/PaywallContext';
 
 const QuizScreen = ({ onNavigate, quizConfig }) => {
   const [questions, setQuestions] = useState([]);
@@ -19,6 +20,9 @@ const QuizScreen = ({ onNavigate, quizConfig }) => {
 
   // ✅ ÚNICA FUENTE DE VERDAD: useCxCProgress
   const { getAnsweredQuestions, getAllQuestionsTracking } = useCxCProgress();
+  
+  // 🔒 Hook del Paywall
+  const { incrementAnsweredCount } = usePaywall();
 
   useEffect(() => {
     // ✅ Obtener preguntas ya respondidas desde el contexto centralizado
@@ -90,7 +94,7 @@ const QuizScreen = ({ onNavigate, quizConfig }) => {
   };
 
   const handleAnswer = (optionIndex) => {
-    // Si ya había respuesta previa, no animar de nuevo
+    // Si ya había respuesta previa, no animar de nuevo NI incrementar contador
     const wasAnswered = answers[currentQuestionIndex] !== undefined;
     
     setAnswers({
@@ -98,13 +102,16 @@ const QuizScreen = ({ onNavigate, quizConfig }) => {
       [currentQuestionIndex]: optionIndex
     });
 
-    // Solo mostrar feedback visual en primera respuesta
+    // Solo mostrar feedback visual y contar en primera respuesta
     if (!wasAnswered) {
       const currentQuestion = questions[currentQuestionIndex];
       const isCorrect = optionIndex === currentQuestion.respuestaCorrecta;
       
       setShowFeedback(true);
       setIsCorrectAnswer(isCorrect);
+      
+      // 🔒 Incrementar contador del paywall (sin importar si es correcta o incorrecta)
+      incrementAnsweredCount();
       
       if (isCorrect) {
         // Respuesta correcta: dar XP y incrementar racha

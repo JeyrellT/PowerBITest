@@ -2,6 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useCallback, use
 import { progressService } from '../services/progressService';
 import { telemetryService } from '../services/telemetryService';
 import { useAutosave } from '../hooks/useAutosave';
+import { QuestionCounter } from '../utils/questionCounter';
 
 // ============================================================================
 // CONSTANTES Y CONFIGURACIONES
@@ -721,6 +722,8 @@ const estimateDaysToReady = (progress) => {
 /**
  * Determina nivel de confianza
  */
+const PROCESSED_QUIZ_MEMORY = 200;
+
 const determineConfidence = (progress) => {
   const readiness = calculateExamReadiness(progress);
   
@@ -794,7 +797,8 @@ export const CxCProgressProvider = ({ children }) => {
     missions: {},
     history: [],
     currentAct: 0,
-    points: { total: 0, available: 0, spentOnHelps: 0, currentRank: 'Bronce' }
+    points: { total: 0, available: 0, spentOnHelps: 0, currentRank: 'Bronce' },
+    processedQuizIds: []
   });
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -804,6 +808,7 @@ export const CxCProgressProvider = ({ children }) => {
   const retryTimerRef = useRef(null);
   const internalSaveRef = useRef(() => Promise.resolve(null));
   const lastProcessedQuizzesRef = useRef(new Set());
+  const isInitializedRef = useRef(false); // 🆕 Prevenir doble inicialización
 
   // ✅ NUEVOS: Sistema de deduplicación y cola de actualizaciones
   // Eliminar o comentar estas variables no utilizadas
@@ -820,7 +825,14 @@ export const CxCProgressProvider = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    // 🆕 PREVENIR DOBLE INICIALIZACIÓN
+    if (isInitializedRef.current) {
+      console.log('⏭️ Contexto ya inicializado, ignorando duplicado');
+      return;
+    }
+    
     const initProgress = async () => {
+      isInitializedRef.current = true; // Marcar como inicializado INMEDIATAMENTE
       try {
         setLoading(true);
         const storedProgress = await progressService.loadProgress();
@@ -871,6 +883,9 @@ export const CxCProgressProvider = ({ children }) => {
             longestStreak: storedProgress.progress.longestStreak ?? 0,
             lastQuizDate: storedProgress.progress.lastQuizDate || null,
             missions: sanitizeMissions(storedProgress.progress.missions || {}),
+            processedQuizIds: Array.isArray(storedProgress.progress.processedQuizIds)
+              ? storedProgress.progress.processedQuizIds.slice(-PROCESSED_QUIZ_MEMORY)
+              : [],
             points: {
               total: totalPoints,  // ✅ Sincronizar con totalPoints
               available: totalPoints,
@@ -880,6 +895,7 @@ export const CxCProgressProvider = ({ children }) => {
           };
 
           setProgress(sanitizedProgress);
+          lastProcessedQuizzesRef.current = new Set(sanitizedProgress.processedQuizIds || []);
           setUserId(storedProgress.user.id);
           setLastSaved(new Date(sanitizedProgress.updatedAt));
           setDirty(true); // Marcar como sucio para forzar guardado de datos sanitizados
@@ -910,10 +926,12 @@ export const CxCProgressProvider = ({ children }) => {
             currentStreak: 0,
             longestStreak: 0,
             lastQuizDate: null,
-            missions: sanitizeMissions(newProgress.progress.missions || {})
+            missions: sanitizeMissions(newProgress.progress.missions || {}),
+            processedQuizIds: []
           };
 
           setProgress(normalizedProgress);
+          lastProcessedQuizzesRef.current = new Set();
           setUserId(newProgress.user.id);
           const snapshot = await progressService.saveProgress(
             { ...newProgress, progress: normalizedProgress },
@@ -997,7 +1015,8 @@ export const CxCProgressProvider = ({ children }) => {
         levelStats: next.levelStats || prev.levelStats || {},
         achievements: next.achievements || prev.achievements || [],
         badges: next.badges || prev.badges || [],
-        history: next.history || prev.history || []
+        history: next.history || prev.history || [],
+        processedQuizIds: next.processedQuizIds || prev.processedQuizIds || []
       };
       
       setDirty(true);
@@ -1613,10 +1632,18 @@ export const CxCProgressProvider = ({ children }) => {
       if (metadata.level) tracking.level = metadata.level;
       if (metadata.subDomain) tracking.subDomain = metadata.subDomain;
 
+      // ✅ SOLUCIÓN CRÍTICA: Agregar pregunta a answeredQuestions SIEMPRE
+      // No solo cuando es correcta - queremos saber TODAS las preguntas que el usuario ha visto
+      const answeredQuestions = prev.answeredQuestions || [];
+      const updatedAnsweredQuestions = answeredQuestions.includes(questionId)
+        ? answeredQuestions
+        : [...answeredQuestions, questionId];
+
       // ✅ SOLO devolver las propiedades que se modifican
       // NO hacer spread de prev para evitar sobrescribir otras actualizaciones
       return {
         ...prev,
+        answeredQuestions: updatedAnsweredQuestions, // ✅ Actualizar lista de preguntas respondidas
         questionTracking: {
           ...questionTracking,
           [questionId]: tracking
@@ -1736,17 +1763,42 @@ export const CxCProgressProvider = ({ children }) => {
    */
   const updateProgressAfterQuiz = useCallback((quizResults) => {
     console.log('🎯 CxCProgressContext.updateProgressAfterQuiz llamado con:', quizResults);
-    
-    // 🆕 VALIDACIÓN: Prevenir actualización duplicada con el mismo quiz
-    const quizSignature = JSON.stringify({
-      questions: quizResults.questionDetails?.map(q => q.id).sort(),
-      correctAnswers: quizResults.correctAnswers,
-      totalTime: quizResults.totalTime
-    });
-    
-    // Verificar si ya procesamos este quiz (usando el ref correctamente definido)
-    if (lastProcessedQuizzesRef.current.has(quizSignature)) {
-      console.log('⚠️ Quiz duplicado detectado en contexto, ignorando');
+
+    // 🆕 VALIDACIÓN DEFINITIVA: Usar el quizId único del ResultsScreen
+    // Este ID es estable y único por quiz, no cambia entre renders. Si no viene, generar fallback determinista.
+    const fallbackQuestionIds = (quizResults?.questionDetails || [])
+      .map((q) => q.id)
+      .filter(Boolean)
+      .sort()
+      .join(',');
+    const computedQuizId = `legacy_${fallbackQuestionIds}_${quizResults?.totalTime || 0}`;
+    const quizId = quizResults.quizId || computedQuizId;
+
+    if (!quizId) {
+      console.error('❌ ERROR: quizId no proporcionado ni se pudo generar fallback');
+      return {
+        newAchievements: [],
+        pointsEarned: 0,
+        xpEarned: 0,
+        levelUp: false,
+        error: 'Missing quizId'
+      };
+    }
+
+    const persistedProcessed = Array.isArray(progress?.processedQuizIds)
+      ? progress.processedQuizIds
+      : [];
+    const alreadyPersisted = persistedProcessed.includes(quizId);
+    const alreadyInSession = lastProcessedQuizzesRef.current.has(quizId);
+
+    if (alreadyPersisted || alreadyInSession) {
+      console.warn('⚠️ Quiz duplicado detectado antes de procesar', {
+        quizId,
+        alreadyPersisted,
+        alreadyInSession,
+        persistedCount: persistedProcessed.length,
+        sessionCount: lastProcessedQuizzesRef.current.size
+      });
       return {
         newAchievements: [],
         pointsEarned: 0,
@@ -1755,19 +1807,45 @@ export const CxCProgressProvider = ({ children }) => {
         duplicate: true
       };
     }
-    
-    lastProcessedQuizzesRef.current.add(quizSignature);
-    
-    // Limpiar signatures antiguas después de 5 segundos
-    setTimeout(() => {
-      lastProcessedQuizzesRef.current.delete(quizSignature);
-    }, 5000);
+
+    // Agregar a Set de procesados en memoria. Se removerá si la actualización se cancela.
+    lastProcessedQuizzesRef.current.add(quizId);
+    console.log('✅ Quiz agregado a Set de procesados en memoria:', quizId);
+    console.log('📊 Total de quizzes procesados en esta sesión:', lastProcessedQuizzesRef.current.size);
     
     const newAchievements = [];
     const totalQuestions = Math.max(0, Number(quizResults?.totalQuestions) || 0);
     const correctAnswers = Math.max(0, Number(quizResults?.correctAnswers) || 0);
     const totalTime = Math.max(0, Number(quizResults?.totalTime) || 0);
     const questionDetails = quizResults?.questionDetails || [];
+  let progressApplied = false;
+
+    // ✅ REGISTRAR TRACKING DE PREGUNTAS AQUÍ (una sola vez, centralizado)
+    console.log('📝 Procesando tracking de preguntas dentro de updateProgressAfterQuiz...');
+    questionDetails.forEach((detail, index) => {
+      const isCorrect = detail.correct;
+      const timeSpent = detail.timeSpent || (totalTime / totalQuestions);
+      
+      console.log(`  ├─ Pregunta ${index + 1}/${totalQuestions} (${detail.id}): ${isCorrect ? '✓' : '✗'} ${detail.domain}/${detail.level}`);
+      
+      // Registrar intento en questionTracking
+      // ✅ recordQuestionAttempt ahora ya agrega a answeredQuestions automáticamente
+      recordQuestionAttempt(
+        detail.id,
+        isCorrect,
+        timeSpent,
+        {
+          domain: detail.domain,
+          level: detail.level,
+          subDomain: detail.subDomain || 'otros',
+          format: detail.format || 'opcion-multiple'
+        }
+      );
+      
+      // ✅ NO es necesario llamar a saveAnsweredQuestion - ya se hace en recordQuestionAttempt
+      // Las preguntas se agregan a answeredQuestions sin importar si son correctas o incorrectas
+    });
+    console.log('✅ Tracking de preguntas completado');
 
     // Calcular puntos SOLO por respuestas correctas con nivel
     let quizPoints = 0;
@@ -1810,16 +1888,34 @@ export const CxCProgressProvider = ({ children }) => {
 
     applyProgressUpdate((prev) => {
       // ✅ VERIFICACIÓN ADICIONAL: Detectar duplicados en historial reciente
-      const recentHistory = (prev.history || []).slice(0, 5);
-      const isDuplicate = recentHistory.some(h => 
+      const recentHistory = (prev.history || []).slice(0, 10);
+      
+      // Verificar duplicados exactos (mismo quiz en los últimos 10 segundos)
+      const isDuplicateExact = recentHistory.some(h => 
         h.type === 'quiz' && 
         h.questions === totalQuestions &&
         h.correctAnswers === correctAnswers &&
-        Math.abs(new Date(h.completedAt) - Date.now()) < 2000 // Menos de 2 segundos
+        h.timeSpent === totalTime &&
+        Math.abs(new Date(h.completedAt) - Date.now()) < 10000 // Menos de 10 segundos
       );
 
-      if (isDuplicate) {
-        console.log('⚠️ Quiz duplicado detectado en historial, ignorando actualización');
+      // Verificar duplicados por signature de preguntas
+      const currentQuestionIds = questionDetails.map(q => q.id).sort().join(',');
+      const isDuplicateByQuestions = recentHistory.some(h => {
+        // Si el history tiene guardada la signature de preguntas
+        if (h.questionIds) {
+          return h.questionIds === currentQuestionIds &&
+                 Math.abs(new Date(h.completedAt) - Date.now()) < 30000; // 30 segundos
+        }
+        return false;
+      });
+
+      if (isDuplicateExact || isDuplicateByQuestions) {
+        console.warn('⚠️ Quiz duplicado detectado en historial, ignorando actualización', {
+          isDuplicateExact,
+          isDuplicateByQuestions,
+          recentHistoryCount: recentHistory.length
+        });
         return prev; // No hacer cambios si es duplicado
       }
       
@@ -1943,10 +2039,12 @@ export const CxCProgressProvider = ({ children }) => {
 
       // ✅ FIX 3: Actualizar historial con campos correctos y clarificados
       const history = [...(prev.history || [])];
+      
       history.unshift({
         type: 'quiz', // ✅ Tipo de entrada en el historial
         completedAt: new Date().toISOString(), // ✅ Timestamp principal
         date: new Date().toISOString(), // Backward compatibility
+        quizId,
         score: correctAnswers, // ✅ Número de respuestas correctas (e.g., 8)
         accuracy: scorePercentage, // ✅ Porcentaje de acierto (e.g., 80)
         points: quizPoints, // Puntos ganados en este quiz
@@ -1956,10 +2054,23 @@ export const CxCProgressProvider = ({ children }) => {
         incorrectAnswers: totalQuestions - correctAnswers, // ✅ Respuestas incorrectas
         timeSpent: totalTime, // Tiempo total del quiz en ms
         domain: quizResults.domain || 'all', // Dominio del quiz
+        questionIds: currentQuestionIds, // ✅ Signature de preguntas para detección de duplicados
         newAchievements: newAchievements.map(a => a.id) // Logros desbloqueados
       });
 
       updatedProgress.history = history.length > 50 ? history.slice(0, 50) : history;
+
+      const prevProcessedIds = Array.isArray(prev.processedQuizIds) ? prev.processedQuizIds : [];
+      if (!prevProcessedIds.includes(quizId)) {
+        const nextProcessedIds = [...prevProcessedIds, quizId];
+        updatedProgress.processedQuizIds = nextProcessedIds.slice(-PROCESSED_QUIZ_MEMORY);
+      } else {
+        updatedProgress.processedQuizIds = prevProcessedIds.slice(-PROCESSED_QUIZ_MEMORY);
+      }
+
+      lastProcessedQuizzesRef.current = new Set(updatedProgress.processedQuizIds);
+
+      progressApplied = true;
 
       console.log('✅ Estado actualizado en updateProgressAfterQuiz:', {
         'updatedProgress.totalPoints': updatedProgress.totalPoints,
@@ -1972,6 +2083,20 @@ export const CxCProgressProvider = ({ children }) => {
 
       return updatedProgress;
     });
+
+    if (!progressApplied) {
+      lastProcessedQuizzesRef.current.delete(quizId);
+      console.warn('⚠️ Quiz no aplicado (probable duplicado detectado en applyProgressUpdate), restaurando estado in-memory', {
+        quizId
+      });
+      return {
+        newAchievements: [],
+        pointsEarned: 0,
+        xpEarned: 0,
+        levelUp: false,
+        duplicate: true
+      };
+    }
 
     console.log('🎉 updateProgressAfterQuiz completado. Puntos ganados:', quizPoints, 'XP ganado:', quizXP);
 
@@ -1992,7 +2117,7 @@ export const CxCProgressProvider = ({ children }) => {
       xpEarned: quizXP,
       levelUp: false // Calcular si subió de nivel
     };
-  }, [applyProgressUpdate, userId, progress]);
+  }, [applyProgressUpdate, userId, progress, recordQuestionAttempt]);
 
   /**
    * Obtiene estadísticas completas (compatibilidad con progressManager.getStats())
@@ -2110,7 +2235,10 @@ export const CxCProgressProvider = ({ children }) => {
       // ✅ VALIDACIÓN: attempted + incorrect debe tener sentido
       const validIncorrect = Math.min(incorrect, attempted);
       
-      const total = toPositiveInteger(stats.total);
+      // ✅ CORRECCIÓN CRÍTICA: Usar total REAL del banco de preguntas
+      const totalRealFromBank = QuestionCounter.getTotalByDomain(domain);
+      const total = totalRealFromBank > 0 ? totalRealFromBank : toPositiveInteger(stats.total);
+      
       const timeSpent = Math.max(0, toInteger(stats.timeSpent || 0));
       const avgTime = roundNumber(stats.avgTime || 0, 1);
       
@@ -2234,12 +2362,76 @@ export const CxCProgressProvider = ({ children }) => {
       history // ✅ Agregar history explícitamente
     };
     
+    // ✅ VALIDACIONES DE CONSISTENCIA
+    const inconsistencies = [];
+    
+    // 1. Validar que puntos y XP no sean negativos
+    if (result.totalPoints < 0) {
+      inconsistencies.push(`❌ totalPoints negativo: ${result.totalPoints}`);
+    }
+    if (result.totalXP < 0) {
+      inconsistencies.push(`❌ totalXP negativo: ${result.totalXP}`);
+    }
+    
+    // 2. Validar que correctAnswers no sea mayor que questionsAnswered
+    if (result.correctAnswers > result.questionsAnswered) {
+      inconsistencies.push(`❌ correctAnswers (${result.correctAnswers}) > questionsAnswered (${result.questionsAnswered})`);
+    }
+    
+    // 3. Validar puntos totales vs historial
+    const historyPoints = history.reduce((sum, h) => sum + (h.points || 0), 0);
+    const achievementPoints = achievements.reduce((sum, achId) => {
+      const ach = Object.values(ACHIEVEMENT_TYPES).find(a => a.id === achId);
+      return sum + (ach?.points || 0);
+    }, 0);
+    
+    // ✅ CORRECCIÓN: Los logros YA están incluidos en totalPoints
+    // Solo validar que no haya una diferencia ABSURDA (no esperamos exactitud perfecta)
+    // Margen generoso del 20% o mínimo 100 puntos
+    const expectedMin = historyPoints; // Sin logros (caso mínimo)
+    const expectedMax = historyPoints + achievementPoints + 200; // Con logros + bonos (caso máximo)
+    
+    if (result.totalPoints < expectedMin - 50 || result.totalPoints > expectedMax) {
+      inconsistencies.push(`⚠️ Posible discrepancia en puntos: Total=${result.totalPoints}, Rango esperado=${expectedMin}-${expectedMax} (History: ${historyPoints}, Achievements: ${achievementPoints})`);
+    }
+    
+    // 4. Validar que cada dominio tenga datos consistentes
+    Object.entries(result.domainStats).forEach(([domain, stats]) => {
+      if (stats.correct + stats.incorrect > stats.attempted) {
+        inconsistencies.push(`❌ ${domain}: correct(${stats.correct}) + incorrect(${stats.incorrect}) > attempted(${stats.attempted})`);
+      }
+      
+      if (stats.attempted > 0 && stats.accuracy > 100) {
+        inconsistencies.push(`❌ ${domain}: accuracy (${stats.accuracy}%) > 100%`);
+      }
+    });
+    
+    // 5. Validar que history tenga sentido con quizzesTaken
+    const historyQuizCount = history.filter(h => h.type === 'quiz').length;
+    if (historyQuizCount !== result.quizzesTaken) {
+      inconsistencies.push(`⚠️ history tiene ${historyQuizCount} quizzes pero quizzesTaken=${result.quizzesTaken}`);
+    }
+    
+    // Mostrar inconsistencias si existen
+    if (inconsistencies.length > 0) {
+      console.error('🚨 INCONSISTENCIAS DETECTADAS EN getStats():', inconsistencies);
+      console.error('📋 Estado completo de progress:', {
+        totalPoints: progress.totalPoints,
+        totalXP: progress.totalXP,
+        answeredQuestions: progress.answeredQuestions?.length,
+        questionTracking: Object.keys(progress.questionTracking || {}).length,
+        history: progress.history?.length,
+        historyData: progress.history?.slice(0, 3)
+      });
+    }
+    
     console.log('✅ getStats() resultado:', {
       questionsAnswered: result.questionsAnswered,
       quizzesTaken: result.quizzesTaken,
       totalPoints: result.totalPoints,
       accuracy: result.accuracy,
-      domainStatsCount: Object.keys(result.domainStats).length
+      domainStatsCount: Object.keys(result.domainStats).length,
+      inconsistencies: inconsistencies.length
     });
     
     return result;

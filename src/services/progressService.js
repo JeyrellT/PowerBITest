@@ -137,11 +137,20 @@ class ProgressService {
   }
 
   async ensureDB() {
-    if (this.db) return this.db;
+    // Si ya tenemos una conexión válida y no está cerrada, reutilizarla
+    if (this.db && !this.db.closePending) {
+      return this.db;
+    }
+    
+    // Si la conexión está cerrada o no existe, reiniciar
     try {
+      console.log('🔄 Reiniciando conexión IndexedDB...');
+      this.db = null;
+      this.dbReady = this.initDB();
       this.db = await this.dbReady;
+      console.log('✅ IndexedDB reconectada correctamente');
     } catch (error) {
-      console.warn('IndexedDB no disponible:', error.message);
+      console.warn('⚠️ IndexedDB no disponible:', error.message);
       this.db = null;
     }
     return this.db;
@@ -633,17 +642,25 @@ class ProgressService {
 
     const db = await this.ensureDB();
     if (db) {
-      await this.saveToIndexedDB('MissionSnapshots', {
-        snapshotId,
-        ...snapshotPayload,
-        savedAt: nowIso
-      });
+      try {
+        await this.saveToIndexedDB('MissionSnapshots', {
+          snapshotId,
+          ...snapshotPayload,
+          savedAt: nowIso
+        });
 
-      await this.saveToIndexedDB('ProgressHistory', {
-        userId: snapshotPayload.user.id,
-        snapshot: snapshotPayload.progress,
-        timestamp: nowIso
-      });
+        await this.saveToIndexedDB('ProgressHistory', {
+          userId: snapshotPayload.user.id,
+          snapshot: snapshotPayload.progress,
+          timestamp: nowIso
+        });
+        console.log('✅ Datos guardados en IndexedDB correctamente');
+      } catch (idbError) {
+        console.warn('⚠️ Error guardando en IndexedDB, datos ya están en localStorage:', idbError.message);
+        // No lanzar error, localStorage ya tiene los datos críticos
+      }
+    } else {
+      console.log('ℹ️ IndexedDB no disponible, usando solo localStorage');
     }
 
     const meta = { snapshotId, timestamp: nowIso, source: options.source };
@@ -924,12 +941,26 @@ class ProgressService {
     if (!db) throw new Error('IndexedDB no inicializada');
 
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([storeName], 'readwrite');
-      const store = transaction.objectStore(storeName);
-      const request = store.put(data);
+      try {
+        // Verificar que la conexión está abierta antes de crear transacción
+        if (db.closePending) {
+          reject(new Error('La conexión de IndexedDB está cerrándose'));
+          return;
+        }
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+        const transaction = db.transaction([storeName], 'readwrite');
+        const store = transaction.objectStore(storeName);
+        const request = store.put(data);
+
+        transaction.oncomplete = () => resolve(request.result);
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(new Error('Transacción abortada'));
+        
+        request.onerror = () => reject(request.error);
+      } catch (error) {
+        // Si falla al crear la transacción, rechazar con error específico
+        reject(new Error(`Error creando transacción: ${error.message}`));
+      }
     });
   }
 
@@ -938,12 +969,25 @@ class ProgressService {
     if (!db) throw new Error('IndexedDB no inicializada');
 
     return new Promise((resolve, reject) => {
-      const transaction = db.transaction([storeName], 'readonly');
-      const store = transaction.objectStore(storeName);
-      const request = store.get(key);
+      try {
+        // Verificar que la conexión está abierta antes de crear transacción
+        if (db.closePending) {
+          reject(new Error('La conexión de IndexedDB está cerrándose'));
+          return;
+        }
 
-      request.onsuccess = () => resolve(request.result);
-      request.onerror = () => reject(request.error);
+        const transaction = db.transaction([storeName], 'readonly');
+        const store = transaction.objectStore(storeName);
+        const request = store.get(key);
+
+        transaction.onerror = () => reject(transaction.error);
+        transaction.onabort = () => reject(new Error('Transacción abortada'));
+        
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      } catch (error) {
+        reject(new Error(`Error creando transacción: ${error.message}`));
+      }
     });
   }
 
