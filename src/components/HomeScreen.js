@@ -176,7 +176,7 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
         tooltip: totalAnswered > 0
           ? `Tasa de acierto: ${formatPercent(accuracyPercent)}`
           : 'Completa tu primer quiz para ver tu precisión',
-        isEmpty: accuracyPercent === 0,
+        isEmpty: totalAnswered === 0, // Cambiado: isEmpty cuando NO hay respuestas, no cuando accuracy es 0
         gradientStops: [
           { offset: '0%', color: '#7B3FF2' },
           { offset: '50%', color: '#A855F7' },
@@ -220,7 +220,7 @@ const HomeScreen = ({ onNavigate, userProfile, onResetProfile }) => {
         value: levelIcon,
         valueClass: 'progress-emoji',
         subtext: levelName,
-        detail: `${formatPercent(levelProgressPercent)} al siguiente nivel`,
+        detail: `${formatPercent(100 - levelProgressPercent)} al siguiente nivel`, // Corregido: muestra lo que FALTA
         tooltip: levelProgressPercent > 80
           ? `¡Casi subes de nivel! Solo ${100 - Math.round(levelProgressPercent)}% más`
           : `${levelName} - ${formatPercent(levelProgressPercent)} completado`,
