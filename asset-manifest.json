@@ -1,0 +1,13 @@
+{
+  "files": {
+    "main.css": "/PL300PB/static/css/main.45f97aa0.css",
+    "main.js": "/PL300PB/static/js/main.982a572c.js",
+    "index.html": "/PL300PB/index.html",
+    "main.45f97aa0.css.map": "/PL300PB/static/css/main.45f97aa0.css.map",
+    "main.982a572c.js.map": "/PL300PB/static/js/main.982a572c.js.map"
+  },
+  "entrypoints": [
+    "static/css/main.45f97aa0.css",
+    "static/js/main.982a572c.js"
+  ]
+}
