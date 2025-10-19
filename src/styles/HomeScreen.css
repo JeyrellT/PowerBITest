@@ -2617,7 +2617,7 @@
   
   /* Stats Circulares */
   .circular-stats {
-    padding: 3rem 1rem 2rem; /* Aumentar padding-top en mobile para mayor separación desde hero */
+    padding: 4rem 1rem 2rem; /* Aumentar padding-top a 4rem en mobile para separación óptima desde hero */
   }
   
   .stats-grid {
@@ -2686,7 +2686,7 @@
   
   /* HERO SECTION - RESPONSIVE */
   .hero-compact {
-    margin: 12rem 0 2rem; /* Aumentado a 12rem en mobile para dar espacio completo desde header hasta estadísticas */
+    margin: 14rem 0 2rem; /* Aumentado a 14rem en mobile para dar separación perfecta desde header hasta estadísticas */
     padding: 0 1rem;
   }
   
