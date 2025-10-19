@@ -3,16 +3,57 @@
   <head>
     <meta charset="utf-8" />
     <link rel="icon" href="%PUBLIC_URL%/favicon.ico" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <!-- Theme color para navegadores compatibles (Chrome, Edge, Safari) -->
-    <meta name="theme-color" content="#000000" />
+    
+    <!-- Viewport para responsive -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=5, user-scalable=yes" />
+    
+    <!-- PWA - Theme colors -->
+    <meta name="theme-color" content="#8B5CF6" />
+    <meta name="theme-color" media="(prefers-color-scheme: dark)" content="#0F0F23" />
+    <meta name="theme-color" media="(prefers-color-scheme: light)" content="#F5F7FA" />
+    
+    <!-- PWA - Descripción -->
     <meta
       name="description"
-      content="Plataforma de preparación para el examen PL-300 de Microsoft Power BI Data Analyst"
+      content="Plataforma inteligente de preparación para la certificación PL-300 de Microsoft Power BI Data Analyst con gamificación, análisis adaptativo y sistema de recomendaciones personalizado"
     />
+    
+    <!-- PWA - Apple iOS Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+    <meta name="apple-mobile-web-app-title" content="PL-300 Master" />
+    
+    <!-- PWA - Apple Touch Icons -->
     <link rel="apple-touch-icon" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="apple-touch-icon" sizes="152x152" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="apple-touch-icon" sizes="180x180" href="%PUBLIC_URL%/logo192.png" />
+    <link rel="apple-touch-icon" sizes="167x167" href="%PUBLIC_URL%/logo192.png" />
+    
+    <!-- PWA - Splash Screens para iOS (opcional, mejora UX) -->
+    <meta name="apple-mobile-web-app-status-bar" content="#8B5CF6" />
+    
+    <!-- PWA - Manifest -->
     <link rel="manifest" href="%PUBLIC_URL%/manifest.json" />
-    <title>PL-300 Quiz - Power BI Data Analyst</title>
+    
+    <!-- SEO y Social Media -->
+    <meta name="keywords" content="PL-300, Power BI, Microsoft, Certificación, Quiz, Examen, Data Analyst, BI, Dashboard" />
+    <meta name="author" content="Jeyrell Thompson" />
+    
+    <!-- Open Graph / Facebook -->
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://jeyrellt.github.io/PowerBITest/" />
+    <meta property="og:title" content="PL-300 Master - Certificación Power BI" />
+    <meta property="og:description" content="Plataforma inteligente para aprobar el examen PL-300 de Microsoft Power BI" />
+    <meta property="og:image" content="%PUBLIC_URL%/logo512.png" />
+    
+    <!-- Twitter -->
+    <meta property="twitter:card" content="summary_large_image" />
+    <meta property="twitter:url" content="https://jeyrellt.github.io/PowerBITest/" />
+    <meta property="twitter:title" content="PL-300 Master - Certificación Power BI" />
+    <meta property="twitter:description" content="Plataforma inteligente para aprobar el examen PL-300 de Microsoft Power BI" />
+    <meta property="twitter:image" content="%PUBLIC_URL%/logo512.png" />
+    
+    <title>PL-300 Master - Certificación Power BI Data Analyst</title>
   </head>
   <body>
     <!-- Script para forzar inicio desde arriba en todas las navegaciones -->
