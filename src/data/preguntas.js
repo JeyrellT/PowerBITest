@@ -762,7 +762,7 @@ export const preguntasEjemplo = {
         nivel: 'intermedio',
         formato: 'opcion-multiple',
         trampaComun: 'No entender cómo ALL y ALLSELECTED modifican el contexto de filtro',
-        referencias: ['https://learn.microsoft.com/en-us/dax/all-function-dax']
+        referencias: ['https://youtu.be/-WBy8Tq7RyA']
       },
       {
         id: 'model_inter_006',
