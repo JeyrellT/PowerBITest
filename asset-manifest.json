@@ -1,13 +1,13 @@
 {
   "files": {
     "main.css": "/PowerBITest/static/css/main.e4502369.css",
-    "main.js": "/PowerBITest/static/js/main.d87889a2.js",
+    "main.js": "/PowerBITest/static/js/main.9cbb87a1.js",
     "index.html": "/PowerBITest/index.html",
     "main.e4502369.css.map": "/PowerBITest/static/css/main.e4502369.css.map",
-    "main.d87889a2.js.map": "/PowerBITest/static/js/main.d87889a2.js.map"
+    "main.9cbb87a1.js.map": "/PowerBITest/static/js/main.9cbb87a1.js.map"
   },
   "entrypoints": [
     "static/css/main.e4502369.css",
-    "static/js/main.d87889a2.js"
+    "static/js/main.9cbb87a1.js"
   ]
 }
